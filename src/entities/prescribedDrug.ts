@@ -23,7 +23,5 @@ export class PrescribedDrug {
 
     @Column({ nullable: true })
     start_date: Date;
-
-    @Column({ nullable: true, type: 'enum', enum: ['oral', 'injection', 'topical', 'drops'], default: 'oral' })
-    route: 'oral' | 'injection' | 'topical' | 'drops';
+    
 }

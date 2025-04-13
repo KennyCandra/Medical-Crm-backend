@@ -1,23 +1,24 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from "typeorm";
 import { PrescribedDrug } from "./prescribedDrug";
+import { Classification } from "./Classification";
+import { Route } from "./Rotue";
 
 @Entity()
 export class Drug {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ unique: true, nullable: false })
-    classification: string;
-
     @Column({ nullable: false })
-    system: string;
+    name: string;
 
-    @Column({ nullable: false })
-    drug: string;
+    @ManyToOne(() => Classification, classification => classification.drugs)
+    @JoinColumn()
+    classification: Classification;
 
-    @Column({ nullable: false, type: 'enum', enum: ['oral', 'injection', 'topical', 'drops'], default: 'oral' })
-    route: 'oral' | 'injection' | 'topical' | 'drops';
+    @ManyToOne(() => Route, route => route.drugs)
+    @JoinColumn()
+    route: Route;
 
-    @OneToMany(() => PrescribedDrug, (prescribedDrug) => prescribedDrug.drug)
+    @OneToMany(() => PrescribedDrug, prescribedDrug => prescribedDrug.drug)
     prescribedDrugs: PrescribedDrug[];
 }
