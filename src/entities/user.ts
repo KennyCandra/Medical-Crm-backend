@@ -38,5 +38,6 @@ export class User {
 
     @OneToOne(() => PatientProfile, (profile) => profile.user, { nullable: true })
     patientProfile?: PatientProfile
+    
 
 }

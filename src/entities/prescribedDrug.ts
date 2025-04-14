@@ -19,9 +19,6 @@ export class PrescribedDrug {
     dosage: string;
 
     @Column({ nullable: false })
-    frequency: number;
+    frequency: string;
 
-    @Column({ nullable: true })
-    start_date: Date;
-    
 }

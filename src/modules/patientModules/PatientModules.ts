@@ -1,6 +1,8 @@
 import { User } from "../../entities/user";
 import { QueryRunner } from "typeorm";
 import { PatientProfile } from '../../entities/patientProfile';
+import { AppDataSource } from "../../../ormconfig";
+import createHttpError from 'http-errors'
 
 export default class PatientProfileModules {
 
@@ -15,6 +17,18 @@ export default class PatientProfileModules {
             return newPatient
         } catch (err) {
             throw err
+        }
+    }
+
+
+    static async findPatient(id: string) {
+        try {
+            const patientRepo = await AppDataSource.getRepository(PatientProfile)
+            const patient = await patientRepo.findOneBy({ id: id })
+            console.log(patient)
+            return patient
+        } catch (err) {
+            throw createHttpError.InternalServerError['internal server erro']
         }
     }
 }

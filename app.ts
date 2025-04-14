@@ -7,6 +7,7 @@ import createHttpError from "http-errors";
 import cors from 'cors'
 import AuthRoutes from './src/routes/Auth'
 import SpecializationRoutes from './src/routes/Specializations'
+import PrescriptoinRoutes from './src/routes/Prescription'
 
 const app = express()
 app.use(express.json())
@@ -15,6 +16,7 @@ app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 
 app.use('/auth', AuthRoutes)
 app.use('/spec', SpecializationRoutes)
+app.use('/presc', PrescriptoinRoutes)
 
 app.use(
     (err: ErrorRequestHandler
