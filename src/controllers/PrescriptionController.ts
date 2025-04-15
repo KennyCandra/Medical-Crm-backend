@@ -7,6 +7,7 @@ import { PrescribedDrug } from "../entities/prescribedDrug";
 import prescribedDrugModule from "../modules/PrescribedDrugs/prescribedDrugModules";
 import DrugsModule from "../modules/DrugsModule/DrugsModule";
 import { Drug } from "../entities/drug";
+import createhttperror from 'http-errors'
 
 export class PrescriptionController {
 
@@ -22,7 +23,7 @@ export class PrescriptionController {
             const patient = await PatientProfileModules.findPatient(patientId)
 
             for (const med of medications) {
-                const drug: Drug = await DrugsModule.findDrug(med.drugId)
+                const drug: Drug = await DrugsModule.findDrug(med.id)
                 const prescribedDrug = await prescribedDrugModule.createPrescribedDrug(
                     drug,
                     med.dosage,
@@ -54,7 +55,22 @@ export class PrescriptionController {
 
     }
 
-    static async deletePrescription(req: Request, res: Response, next: NextFunction){
-        
+    static async editPrescription(req: Request, res: Response, next: NextFunction) {
+        try {
+
+            const { prescriptionId } = req.body
+            const prescription = await prescriptionModule.findPrescription(prescriptionId)
+            if (!prescription) {
+                throw createhttperror.NotFound("can't find this")
+            }
+
+            prescription.status = 'done'
+
+            await AppDataSource.manager.save(prescription)
+
+            res.status(200).json({ message: 'updated', prescription })
+        } catch (err) {
+            next(err)
+        }
     }
 }

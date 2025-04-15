@@ -8,6 +8,7 @@ import cors from 'cors'
 import AuthRoutes from './src/routes/Auth'
 import SpecializationRoutes from './src/routes/Specializations'
 import PrescriptoinRoutes from './src/routes/Prescription'
+import DrugRoutes from './src/routes/Drug'
 
 const app = express()
 app.use(express.json())
@@ -17,6 +18,7 @@ app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 app.use('/auth', AuthRoutes)
 app.use('/spec', SpecializationRoutes)
 app.use('/presc', PrescriptoinRoutes)
+app.use('/drug', DrugRoutes)
 
 app.use(
     (err: ErrorRequestHandler

@@ -14,9 +14,32 @@ class DrugsModule {
 
             return drug
         } catch (err) {
-            throw new createhttperror.InternalServerError['internal server error']
+            if (!err) {
+                throw new createhttperror.InternalServerError['internal server error']
+            } else {
+                throw err
+            }
         }
 
+    }
+
+    static async allDrugs() {
+        try {
+            const drugs = await AppDataSource.getRepository(Drug)
+                .createQueryBuilder('drug')
+                .leftJoin('drug.route', 'route')
+                .select([
+                    'drug.name AS name',
+                    'drug.id AS id',
+                    'route.name AS route'
+                ])
+                .getRawMany();
+            return drugs
+
+        }
+        catch (err) {
+            throw err
+        }
     }
 }
 

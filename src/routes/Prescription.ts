@@ -5,6 +5,8 @@ const router = express.Router()
 
 router.post('/create', PrescriptionController.createPrescription)
 
+router.put('/edit', PrescriptionController.editPrescription)
+
 
 
 export default router
