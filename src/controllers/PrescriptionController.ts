@@ -9,7 +9,7 @@ import DrugsModule from "../modules/DrugsModule/DrugsModule";
 import { Drug } from "../entities/drug";
 import createhttperror from 'http-errors'
 
-export class PrescriptionController {
+export default class PrescriptionController {
 
     static async createPrescription(req: Request, res: Response, next: NextFunction) {
         const { doctorId, patientId, medications } = req.body;
@@ -59,12 +59,32 @@ export class PrescriptionController {
         try {
 
             const { prescriptionId } = req.body
-            const prescription = await prescriptionModule.findPrescription(prescriptionId)
+            const prescription = await prescriptionModule.findPrescription(prescriptionId, [])
             if (!prescription) {
                 throw createhttperror.NotFound("can't find this")
             }
 
             prescription.status = 'done'
+            await AppDataSource.manager.save(prescription)
+
+            res.status(200).json({ message: 'updated', prescription })
+        } catch (err) {
+            next(err)
+        }
+    }
+
+
+    static async fetchSinglePrescription(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { id } = req.params
+            const prescription = await prescriptionModule.findPrescription(id, [
+                'patient', 'patient.user',
+                'doctor', 'doctor.user',
+                'prescribedDrugs', 'prescribedDrugs.drug'
+            ]);
+            if (!prescription) {
+                throw createhttperror.NotFound("can't find this")
+            }
 
             await AppDataSource.manager.save(prescription)
 
@@ -73,4 +93,22 @@ export class PrescriptionController {
             next(err)
         }
     }
+
+    static async fetchManyPrescriptions(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { doctorId, patientId } = req.params
+            let prescriptions;
+
+            { doctorId ? prescriptions = await prescriptionModule.findManyPrescriptions(doctorId, null) : prescriptions = await prescriptionModule.findManyPrescriptions(null, patientId) }
+            if (!prescriptions) {
+                throw createhttperror.NotFound("can't find this")
+            }
+
+            res.status(200).json({ message: 'here', prescriptions })
+        } catch (err) {
+            next(err)
+        }
+    }
+
+    
 }

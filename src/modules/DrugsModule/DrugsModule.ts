@@ -23,11 +23,12 @@ class DrugsModule {
 
     }
 
-    static async allDrugs() {
+    static async allDrugs(value: string) {
         try {
             const drugs = await AppDataSource.getRepository(Drug)
                 .createQueryBuilder('drug')
                 .leftJoin('drug.route', 'route')
+                .where("drug.name ILIKE :value", { value: `%${value}%` })
                 .select([
                     'drug.name AS name',
                     'drug.id AS id',

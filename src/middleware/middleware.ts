@@ -1,4 +1,5 @@
-import { Response, Request, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
+import { verifyToken } from "../helpers/verifyToken";
 
 declare module "express-serve-static-core" {
     interface Request {
@@ -7,22 +8,36 @@ declare module "express-serve-static-core" {
     }
 }
 
-export class Auth {
+interface DecodedToken {
+    userId: string;
+    exp: number;
+}
 
-    static isAuth(req: Request, res: Response, next: NextFunction) {
+class Auth {
+    static async checkToken(req: Request, res: Response, next: NextFunction) {
         try {
             const accessToken = req.get('Authorization');
 
             if (!accessToken) {
-                res.status(401).json({ message: 'not authenticated' })
-                return
+                res.status(401).json({ message: "Not Authenticated" });
+                return;
             }
 
-            next()
-        }
-        catch (err) {
-            next(err)
-        }
+            const { decodedToken, expired } = await verifyToken(accessToken);
 
+            if (expired) {
+                res.status(401).json({ message: "Not Authenticated" });
+                return;
+            }
+
+            req.body.userId = (decodedToken as DecodedToken).userId;
+            next();
+
+
+        } catch (error) {
+            res.status(500).json({ message: "Authentication error" });
+        }
     }
 }
+
+export default Auth;

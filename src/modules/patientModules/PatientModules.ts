@@ -12,7 +12,6 @@ export default class PatientProfileModules {
             const newPatient = new PatientProfile()
             newPatient.blood_type = blood_type
             newPatient.user = user;
-            console.log('i am here')
             await queryRunner.manager.save(newPatient)
             return newPatient
         } catch (err) {
@@ -25,7 +24,6 @@ export default class PatientProfileModules {
         try {
             const patientRepo = await AppDataSource.getRepository(PatientProfile)
             const patient = await patientRepo.findOneBy({ id: id })
-            console.log(patient)
             return patient
         } catch (err) {
             throw createHttpError.InternalServerError['internal server erro']

@@ -65,32 +65,30 @@ class AuthController {
 
     static async login(req: Request, res: Response, next: NextFunction) {
         try {
-
-
             const user = await AppDataSource.getRepository(User)
                 .createQueryBuilder('user')
-                .addSelect("CONCAT(user.first_name, ' ' , user.last_name)", 'fullname')
+                .leftJoinAndSelect('user.doctorProfile', 'doctorProfile')
+                .leftJoinAndSelect('user.patientProfile', 'patientProfile')
                 .where("user.NID = :NID", { NID: req.body.NID })
-                .getRawOne()
-
+                .getOne()
 
             if (!user) {
                 throw new createHttpError.NotFound('User not found');
             }
 
-            const isPasswordValid = await bcrypt.compare(req.body.password, user.user_password);
+            const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
             if (!isPasswordValid) {
                 throw new createHttpError.Unauthorized('Invalid password');
             }
 
             const accessToken = sign(
-                { userId: user.user_id, name: user.fullname },
+                { userId: user.id, name: user.first_name + " " + user.last_name },
                 'supersecretkey',
                 { expiresIn: '15m' }
             )
 
             const refreshToken = sign(
-                { userId: user.user_id },
+                { userId: user.id },
                 'supersecretkey',
                 { expiresIn: '60d' }
             )
@@ -102,10 +100,45 @@ class AuthController {
                 httpOnly: true
             })
 
-
             res.status(200).json({ message: 'Login successful', user, accessToken });
         } catch (err) {
             next(err)
+        }
+    }
+
+    static async fetchUser(req: Request, res: Response, next: NextFunction) {
+        try {
+            const user = await AppDataSource.getRepository(User).createQueryBuilder('user').where('user.id = :id', { id: req.body.userId }).getOne()
+
+            res.status(200).json({ message: 'fetched user', user })
+        }
+        catch (err) {
+            console.log(err)
+            next(err)
+        }
+    }
+
+    static async searchPatient(req: Request, res: Response, next: NextFunction) {
+        try {
+            const nid = req.params.nid;
+
+            const users = await AppDataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .where('user.NID LIKE :nid', { nid: `%${nid}%` })
+                .andWhere('user.role = :role', { role: 'patient' })
+                .leftJoinAndSelect('user.patientProfile', 'patientProfile')
+                .select([
+                    'user.id AS id',
+                    'user.NID as NID',
+                    "CONCAT(user.first_name, ' ', user.last_name) AS fullName"
+                ])
+                .getRawMany()
+
+            res.status(200).json({ users });
+        }
+        catch (err) {
+            console.log(err)
+            next(err);
         }
     }
 }

@@ -2,7 +2,7 @@ import express from 'express'
 const router = express.Router()
 import DrugController from '../controllers/DrugsController'
 
-router.get('/', DrugController.fetchAllDrugs)
+router.post('/', DrugController.fetchAllDrugs)
 
 
 export default router
