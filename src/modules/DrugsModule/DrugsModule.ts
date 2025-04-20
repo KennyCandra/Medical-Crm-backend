@@ -5,6 +5,7 @@ import { Drug } from "../../entities/drug";
 class DrugsModule {
     static async findDrug({ drugId }: { drugId: string }) {
         try {
+            console.log(drugId)
             const drugRepo = await AppDataSource.getRepository(Drug)
             const drug = await drugRepo.findOneBy({ id: drugId })
 

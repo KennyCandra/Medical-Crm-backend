@@ -17,31 +17,31 @@ export default class PrescriptionController {
         await queryRunner.connect()
         await queryRunner.startTransaction()
         try {
-            let prescbriedDrugs: PrescribedDrug[] = []
+            let prescribedDrugs: PrescribedDrug[] = []
 
             const doctor = await DoctorProfileModules.findDoctor(doctorId)
             const patient = await PatientProfileModules.findPatient(patientId)
 
             for (const med of medications) {
-                const drug: Drug = await DrugsModule.findDrug(med.id)
+                const drug: Drug = await DrugsModule.findDrug({ drugId: med.drug.id })
                 const prescribedDrug = await prescribedDrugModule.createPrescribedDrug(
                     drug,
-                    med.dosage,
+                    med.dose,
                     med.frequency,
                     queryRunner
                 )
-                prescbriedDrugs.push(prescribedDrug)
+                prescribedDrugs.push(prescribedDrug)
             }
-
+            await queryRunner.manager.save(prescribedDrugs)
             const newPrescrition = await prescriptionModule.createPrescription({
                 doctor: doctor,
                 patient: patient,
                 queryRunner: queryRunner,
-                prescribedDrug: prescbriedDrugs
+                prescribedDrug: prescribedDrugs
             })
 
             await queryRunner.manager.save(newPrescrition)
-            res.status(200).json({ doctor, patient, newPrescrition })
+            res.status(201).json({ doctor, patient, newPrescrition })
             await queryRunner.commitTransaction()
 
         } catch (err) {
@@ -72,7 +72,6 @@ export default class PrescriptionController {
             next(err)
         }
     }
-
 
     static async fetchSinglePrescription(req: Request, res: Response, next: NextFunction) {
         try {
@@ -110,5 +109,5 @@ export default class PrescriptionController {
         }
     }
 
-    
+
 }

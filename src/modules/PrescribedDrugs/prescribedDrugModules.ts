@@ -14,7 +14,6 @@ class prescribedDrugModule {
                 drug: drugName,
                 frequency: frequency,
             })
-            await queryRunner.manager.save(newPrescribedDrug)
             return newPrescribedDrug
         } catch (err) {
             console.log(err)

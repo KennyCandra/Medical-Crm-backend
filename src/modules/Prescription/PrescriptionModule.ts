@@ -63,22 +63,23 @@ class prescriptionModule {
 
     static async findManyPrescriptions(doctorId: string, patientId: string) {
         try {
-            const queryBuilder = await AppDataSource.getRepository(Prescription)
+            const queryBuilder = AppDataSource.getRepository(Prescription)
                 .createQueryBuilder('prescription')
+                .leftJoinAndSelect('prescription.doctor', 'doctor')
+                .leftJoinAndSelect('prescription.patient', 'patient')
+                .leftJoinAndSelect('doctor.user', 'doctorProfile')
+                .leftJoinAndSelect('patient.user', 'patientProfile');
 
             if (doctorId) {
-                queryBuilder.where('prescription.doctorId = :id', { id: doctorId })
+                queryBuilder.where('doctor.id = :id', { id: doctorId });
             } else {
-                queryBuilder.where('prescription.patientId = :id', { id: patientId })
+                queryBuilder.where('patient.id = :id', { id: patientId });
             }
 
-            const prescriptions = await queryBuilder.getMany()
-            console.log(prescriptions)
-            return prescriptions
-
-        }
-        catch (err) {
-            throw err
+            const prescriptions = await queryBuilder.getMany();
+            return prescriptions;
+        } catch (err) {
+            throw err;
         }
     }
 
