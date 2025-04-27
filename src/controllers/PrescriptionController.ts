@@ -87,7 +87,7 @@ export default class PrescriptionController {
 
             await AppDataSource.manager.save(prescription)
 
-            res.status(200).json({ message: 'updated', prescription })
+            res.status(200).json({ message: 'signlePresc', prescription })
         } catch (err) {
             next(err)
         }

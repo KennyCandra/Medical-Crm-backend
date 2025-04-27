@@ -9,16 +9,21 @@ import AuthRoutes from './src/routes/Auth'
 import SpecializationRoutes from './src/routes/Specializations'
 import PrescriptoinRoutes from './src/routes/Prescription'
 import DrugRoutes from './src/routes/Drug'
+import AnalyticsRoutes from './src/routes/Analytics'
+import cookiesParser from 'cookie-parser'
+import axios from 'axios'
 
 const app = express()
 app.use(express.json())
+app.use(cookiesParser())
 app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
-
 
 app.use('/auth', AuthRoutes)
 app.use('/spec', SpecializationRoutes)
 app.use('/presc', PrescriptoinRoutes)
 app.use('/drug', DrugRoutes)
+app.use('/analytics', AnalyticsRoutes)
+
 
 app.use(
     (err: ErrorRequestHandler

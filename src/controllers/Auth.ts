@@ -8,17 +8,19 @@ import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
 import { SpecializationModules } from "../modules/SpecializationModules/SpecializationModules";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
 import { sign } from "jsonwebtoken";
+import { verifyToken } from "../helpers/verifyToken";
 
 
 class AuthController {
 
     static async SignUp(req: Request, res: Response, next: NextFunction) {
-        const { fName, lName, gender, NID, password, role } = req.body;
         const queryRunner = AppDataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
 
         try {
+            const { firstName, lastName, gender, NID, password, role } = req.body;
+
             if (role === 'owner') {
                 throw createHttpError.BadRequest('Owner cannot be created');
             }
@@ -26,30 +28,30 @@ class AuthController {
             if (!NID.startsWith('2') && !NID.startsWith('3')) {
                 throw new createHttpError.BadRequest('NID must start with 2 or 3');
             };
-            const { newUser } = await UserModules.createUser(
-                fName,
-                lName,
+            const newUser = await UserModules.createUser(
+                firstName,
+                lastName,
                 gender,
                 NID,
                 password,
                 role,
-                queryRunner
             )
+            await queryRunner.manager.save(newUser)
 
             if (newUser?.role === "doctor" && newUser !== null) {
-                const specializationEntity = SpecializationModules.isValid(req.body.specialization)
-                await DoctorProfileModules.createDoctor({
+                const specializationEntity = SpecializationModules.isValid(req.body.speciality)
+                const doctor = await DoctorProfileModules.createDoctor({
                     user: newUser,
                     license: req.body.license,
                     specialization: (await specializationEntity).specializationId,
-                    queryRunner: queryRunner
                 })
+                await queryRunner.manager.save(doctor)
             } else if (newUser.role === 'patient') {
-                PatientProfileModules.createPatient({
+                const patient = await PatientProfileModules.createPatient({
                     user: newUser,
-                    blood_type: req.body.blood,
-                    queryRunner: queryRunner
+                    blood_type: req.body.blood_type,
                 })
+                await queryRunner.manager.save(patient)
             }
             await queryRunner.commitTransaction();
             res.status(201).json({ message: "created User", newUser });
@@ -69,7 +71,7 @@ class AuthController {
                 .createQueryBuilder('user')
                 .leftJoinAndSelect('user.doctorProfile', 'doctorProfile')
                 .leftJoinAndSelect('user.patientProfile', 'patientProfile')
-                .where("user.NID = :NID", { NID: req.body.NID })
+                .where("user.NID = :NID", { NID: req.body.nid })
                 .getOne()
 
             if (!user) {
@@ -82,7 +84,7 @@ class AuthController {
             }
 
             const accessToken = sign(
-                { userId: user.id, name: user.first_name + " " + user.last_name },
+                { userId: user.id, name: user.first_name + " " + user.last_name, role: user.role },
                 'supersecretkey',
                 { expiresIn: '15m' }
             )
@@ -100,7 +102,7 @@ class AuthController {
                 httpOnly: true
             })
 
-            res.status(200).json({ message: 'Login successful', user, accessToken });
+            res.status(200).json({ message: 'Login successful', accessToken, user });
         } catch (err) {
             next(err)
         }
@@ -121,7 +123,6 @@ class AuthController {
     static async searchPatient(req: Request, res: Response, next: NextFunction) {
         try {
             const nid = req.params.nid;
-
             const users = await AppDataSource.getRepository(User)
                 .createQueryBuilder('user')
                 .where('user.NID LIKE :nid', { nid: `%${nid}%` })
@@ -141,6 +142,65 @@ class AuthController {
             next(err);
         }
     }
+
+    static async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const refreshToken = req.cookies['refresh-token']
+            const token = await verifyToken(refreshToken)
+            if (token.expired) {
+                console.log(token)
+                res.status(401).json({ message: 'please login again' })
+                return
+            }
+
+            const user = await AppDataSource.getRepository(User).findOneBy({ id: token.decodedToken.userId })
+
+            const accessToken = sign(
+                { userId: user.id, name: user.first_name + " " + user.last_name, role: user.role },
+                'supersecretkey',
+                { expiresIn: '15m' }
+            )
+
+            res.status(200).json({ accessToken, user })
+        }
+        catch (err) {
+            console.log(err)
+            next(err)
+        }
+    }
+
+    static async fetchUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { role, userId } = req.body;
+
+            const query = AppDataSource.getRepository(User)
+                .createQueryBuilder('user');
+
+            if (role === 'doctor') {
+                query.leftJoin('user.doctorProfile', 'doctorProfile')
+                    .select('doctorProfile.id', 'profileId');
+            } else {
+                query.leftJoin('user.patientProfile', 'patientProfile')
+                    .select('patientProfile.id', 'profileId');
+            }
+
+            query.where('user.id = :id', { id: userId });
+
+            const result = await query.getRawOne();
+
+            if (!result) {
+                res.status(404).json({ message: 'User not found' });
+                return;
+            }
+
+            res.status(200).json({ profileId: result.profileId, role });
+
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+
 }
 
 

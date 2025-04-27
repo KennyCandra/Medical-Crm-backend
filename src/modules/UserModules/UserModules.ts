@@ -1,7 +1,6 @@
 import { User } from "../../entities/user";
 import bcrypt from 'bcrypt'
 import createHttpError from 'http-errors'
-import { QueryRunner } from "typeorm";
 
 export default class UserModules {
 
@@ -11,8 +10,7 @@ export default class UserModules {
         gender: "male" | "female",
         NID: string,
         password: string,
-        role: "doctor" | "patient" | "owner",
-        queryRunner: QueryRunner) {
+        role: "doctor" | "patient" | "owner") {
 
         try {
             const hashedPw = await bcrypt.hash(password, 12)
@@ -24,10 +22,9 @@ export default class UserModules {
             newUser.role = role
             newUser.password = hashedPw
             newUser.birth_date = new Date()
-            await queryRunner.manager.save(newUser)
 
 
-            return { newUser: newUser }
+            return newUser
         } catch (err) {
             console.log(err)
             if (err.code === '23505') {

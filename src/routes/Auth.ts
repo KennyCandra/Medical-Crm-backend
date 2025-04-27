@@ -7,9 +7,12 @@ router.post('/sign-up', AuthController.SignUp)
 
 router.post('/login', AuthController.login)
 
+router.get('/userId', Auth.checkToken, AuthController.fetchUserId)
+
 router.get('/profile', Auth.checkToken, AuthController.fetchUser)
 
-router.get('/:nid', AuthController.searchPatient)
+router.get('/refreshToken', AuthController.refreshToken)
 
+router.get('/:nid', AuthController.searchPatient)
 
 export default router

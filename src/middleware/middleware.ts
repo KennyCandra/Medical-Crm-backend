@@ -11,13 +11,13 @@ declare module "express-serve-static-core" {
 interface DecodedToken {
     userId: string;
     exp: number;
+    role: string
 }
 
 class Auth {
     static async checkToken(req: Request, res: Response, next: NextFunction) {
         try {
             const accessToken = req.get('Authorization');
-
             if (!accessToken) {
                 res.status(401).json({ message: "Not Authenticated" });
                 return;
@@ -29,7 +29,7 @@ class Auth {
                 res.status(401).json({ message: "Not Authenticated" });
                 return;
             }
-
+            req.body.role = (decodedToken as DecodedToken).role
             req.body.userId = (decodedToken as DecodedToken).userId;
             next();
 

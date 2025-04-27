@@ -4,8 +4,8 @@ import createHttpError from 'http-errors'
 
 export class SpecializationModules {
 
-    static async isValid(validationName: string) {
-        const specialization = await AppDataSource.getRepository(Specialization).findOneBy({ name: validationName })
+    static async isValid(specialityId: string) {
+        const specialization = await AppDataSource.getRepository(Specialization).findOneBy({ id: specialityId })
 
         if (specialization) {
             return { specializationId: specialization, isValidSpecialization: true }

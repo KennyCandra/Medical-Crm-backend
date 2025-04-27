@@ -6,13 +6,12 @@ import createHttpError from 'http-errors'
 
 export default class PatientProfileModules {
 
-    static async createPatient({ user, blood_type, queryRunner }:
-        { user: User, blood_type: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'Unknown', queryRunner: QueryRunner }) {
+    static async createPatient({ user, blood_type }:
+        { user: User, blood_type: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'Unknown'}) {
         try {
             const newPatient = new PatientProfile()
             newPatient.blood_type = blood_type
             newPatient.user = user;
-            await queryRunner.manager.save(newPatient)
             return newPatient
         } catch (err) {
             throw err
