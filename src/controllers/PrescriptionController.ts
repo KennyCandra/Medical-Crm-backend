@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import e, { Request, Response, NextFunction } from "express";
 import { AppDataSource } from "../../ormconfig";
 import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
@@ -18,6 +18,11 @@ export default class PrescriptionController {
         await queryRunner.startTransaction()
         try {
             let prescribedDrugs: PrescribedDrug[] = []
+
+            if (medications.length = 0) {
+                res.status(400).json({ message: "please enter some drugs" })
+                return
+            }
 
             const doctor = await DoctorProfileModules.findDoctor(doctorId)
             const patient = await PatientProfileModules.findPatient(patientId)

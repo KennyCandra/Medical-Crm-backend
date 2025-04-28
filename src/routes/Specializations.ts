@@ -5,6 +5,4 @@ const router = express.Router()
 
 router.get('/', specialization.fetchAll)
 
-
-
 export default router

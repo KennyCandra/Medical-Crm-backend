@@ -1,5 +1,6 @@
 import dotenv from 'dotenv'
 dotenv.config()
+
 import express from 'express'
 import { AppDataSource } from './ormconfig'
 import { Response, Request, NextFunction, ErrorRequestHandler } from 'express'
@@ -11,7 +12,7 @@ import PrescriptoinRoutes from './src/routes/Prescription'
 import DrugRoutes from './src/routes/Drug'
 import AnalyticsRoutes from './src/routes/Analytics'
 import cookiesParser from 'cookie-parser'
-import axios from 'axios'
+import { GoogleGenAI } from '@google/genai'
 
 const app = express()
 app.use(express.json())
@@ -24,6 +25,9 @@ app.use('/presc', PrescriptoinRoutes)
 app.use('/drug', DrugRoutes)
 app.use('/analytics', AnalyticsRoutes)
 
+export const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+});
 
 app.use(
     (err: ErrorRequestHandler
