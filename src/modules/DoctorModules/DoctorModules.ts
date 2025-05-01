@@ -30,6 +30,7 @@ export default class DoctorProfileModules {
             if (!doctor) {
                 throw createHttpError.NotFound['doctor id is wrong']
             }
+            console.log(doctor)
             return doctor
         } catch (err) {
             throw createHttpError.InternalServerError['internal server erro']

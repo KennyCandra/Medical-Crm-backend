@@ -9,8 +9,8 @@ export class Diagnosis {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ type: 'enum', enum: ['acute', "severe"] })
-    severity: 'acute' | "severe"
+    @Column({ type: 'enum', enum: ["acute", "severe", "mild", "chronic"] })
+    severity: "acute" | "severe" | "mild" | "chronic"
 
     @Column({ type: 'text', nullable: true })
     notes: string;

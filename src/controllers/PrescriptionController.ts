@@ -1,4 +1,4 @@
-import e, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { AppDataSource } from "../../ormconfig";
 import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
@@ -12,36 +12,45 @@ import createhttperror from 'http-errors'
 export default class PrescriptionController {
 
     static async createPrescription(req: Request, res: Response, next: NextFunction) {
-        const { doctorId, patientId, medications } = req.body;
+        const { doctorId, patientId, medication } = req.body;
         const queryRunner = await AppDataSource.createQueryRunner()
         await queryRunner.connect()
         await queryRunner.startTransaction()
         try {
             let prescribedDrugs: PrescribedDrug[] = []
 
-            if (medications.length = 0) {
+            if (medication.length === 0) {
                 res.status(400).json({ message: "please enter some drugs" })
                 return
             }
 
             const doctor = await DoctorProfileModules.findDoctor(doctorId)
-            const patient = await PatientProfileModules.findPatient(patientId)
+            const patient = await PatientProfileModules.findPatientbyNid(patientId)
 
-            for (const med of medications) {
+            if (!doctor) {
+                res.status(404).json({ message: 'doctor' })
+                return
+            }
+
+            if (!patient) {
+                res.status(404).json({ message: 'patient' })
+                return
+            }
+
+            for (const med of medication) {
                 const drug: Drug = await DrugsModule.findDrug({ drugId: med.drug.id })
                 const prescribedDrug = await prescribedDrugModule.createPrescribedDrug(
                     drug,
                     med.dose,
                     med.frequency,
-                    queryRunner
                 )
                 prescribedDrugs.push(prescribedDrug)
             }
             await queryRunner.manager.save(prescribedDrugs)
+
             const newPrescrition = await prescriptionModule.createPrescription({
                 doctor: doctor,
                 patient: patient,
-                queryRunner: queryRunner,
                 prescribedDrug: prescribedDrugs
             })
 
@@ -57,14 +66,23 @@ export default class PrescriptionController {
             await queryRunner.release()
         }
 
-
     }
 
     static async editPrescription(req: Request, res: Response, next: NextFunction) {
         try {
+            const { prescriptionId } = req.params
+            const { userId } = req.body
+            const patientId = await PatientProfileModules.findPatientById(userId)
+            const prescription = await prescriptionModule.findPrescription(prescriptionId, ['patient'])
 
-            const { prescriptionId } = req.body
-            const prescription = await prescriptionModule.findPrescription(prescriptionId, [])
+            if(patientId === null){
+                throw createhttperror.NotFound("you are not a patient")
+            }
+
+            if (patientId.id !== prescription.patient.id) {
+                throw createhttperror.Unauthorized("you don't take this prescrption")
+            }
+
             if (!prescription) {
                 throw createhttperror.NotFound("can't find this")
             }

@@ -1,5 +1,4 @@
 import { Prescription } from "../../entities/prescription";
-import { QueryRunner } from "typeorm";
 import { PatientProfile } from "../../entities/patientProfile";
 import { DoctorProfile } from "../../entities/doctorProfile";
 import createhttperror from 'http-errors'
@@ -7,7 +6,7 @@ import { PrescribedDrug } from "../../entities/prescribedDrug";
 import { AppDataSource } from "../../../ormconfig";
 
 class prescriptionModule {
-    static async createPrescription({ patient, doctor, queryRunner, prescribedDrug }: { patient: PatientProfile, doctor: DoctorProfile, queryRunner: QueryRunner, prescribedDrug: PrescribedDrug[] }) {
+    static async createPrescription({ patient, doctor, prescribedDrug }: { patient: PatientProfile, doctor: DoctorProfile, prescribedDrug: PrescribedDrug[] }) {
         try {
             const newPrescrition = new Prescription()
             newPrescrition.doctor = doctor;
@@ -15,7 +14,6 @@ class prescriptionModule {
             newPrescrition.prescribedDrugs = prescribedDrug
             newPrescrition.start_date = new Date()
 
-            await queryRunner.manager.save(newPrescrition)
             return newPrescrition
         } catch (err) {
             throw new createhttperror.InternalServerError['internal server error']
@@ -80,6 +78,26 @@ class prescriptionModule {
             return prescriptions;
         } catch (err) {
             throw err;
+        }
+    }
+
+    static async fetchDrugsFromPrescriptinsWithStatusTakingForSinglePatient(patientId) {
+        try {
+            const prescriptions = await AppDataSource.getRepository(Prescription)
+                .createQueryBuilder('p')
+                .where('p.patient = :patient', { patient: patientId })
+                .andWhere('p.status = :status', { status: 'taking' })
+                .leftJoinAndSelect('p.prescribedDrugs', 'pd')
+                .leftJoinAndSelect('pd.drug', 'd')
+                .select('d.name', 'name')
+                .distinct(true)
+                .getRawMany();
+            console.log(prescriptions)
+            return prescriptions
+
+        } catch (err) {
+            console.log(err)
+            throw createhttperror(500, 'internal server error')
         }
     }
 

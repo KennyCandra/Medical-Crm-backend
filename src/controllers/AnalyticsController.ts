@@ -6,6 +6,7 @@ import { Drug } from "../entities/drug";
 import CategoryModule from "../modules/CategoryModule/CategoryModule";
 import ClassificationModule from "../modules/ClassificationModule/ClassificationModule";
 import createhttperror from 'http-errors'
+import { Disease } from "../entities/disease";
 
 export class AnalyticsController {
     static async basicAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -78,6 +79,22 @@ export class AnalyticsController {
         } catch (err) {
             console.log(err)
             next(err)
+        }
+    }
+
+    static async specificDiseaseAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const disease = await AppDataSource.getRepository(Disease).createQueryBuilder('d')
+                .select('d.name', 'name')
+                .addSelect('COUNT(pb.diseaseId)', 'count')
+                .leftJoin('d.diagnoses', 'pb')
+                .groupBy('d.id')
+                .addGroupBy('d.name')
+                .getRawMany();
+            res.status(200).json(disease);
+        } catch (err) {
+            console.log(err);
+            next(err);
         }
     }
 

@@ -101,6 +101,7 @@ class AuthController {
                 sameSite: 'lax',
                 httpOnly: true
             })
+            user.password = undefined
 
             res.status(200).json({ message: 'Login successful', accessToken, user });
         } catch (err) {
@@ -161,6 +162,8 @@ class AuthController {
                 { expiresIn: '15m' }
             )
 
+            user.password = undefined
+
             res.status(200).json({ accessToken, user })
         }
         catch (err) {
@@ -197,6 +200,22 @@ class AuthController {
 
         }
         catch (err) {
+            next(err)
+        }
+    }
+
+    static async logOut(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            res.clearCookie('refreshToken', {
+                secure: true,
+                sameSite: 'lax',
+                httpOnly: true
+            })
+
+            res.status(200).json({ message: 'logged out' })
+        }
+        catch (err) {
+            console.log(err)
             next(err)
         }
     }

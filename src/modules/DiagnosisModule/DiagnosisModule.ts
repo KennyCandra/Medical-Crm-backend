@@ -1,0 +1,36 @@
+import { AppDataSource } from "../../../ormconfig";
+import { Diagnosis } from "../../entities/diagnosis";
+import { Disease } from "../../entities/disease";
+import { DoctorProfile } from "../../entities/doctorProfile";
+import { PatientProfile } from "../../entities/patientProfile";
+import createhttperror from 'http-errors'
+
+export default class DiagnosisModule {
+    static async diagnosesCreation(patient: PatientProfile,
+        doctor: DoctorProfile,
+        disease: Disease,
+        severity: "acute" | "severe" | "mild" | "chronic") {
+        try {
+            const diagnoses = new Diagnosis()
+            diagnoses.doctor = doctor;
+            diagnoses.patient = patient
+            diagnoses.disease = disease
+            diagnoses.severity = severity
+            return diagnoses
+        } catch (err) {
+            throw createhttperror[500]('internal server error')
+        }
+
+    }
+
+    static async findForPatient(patiendId: PatientProfile): Promise<Diagnosis[]> {
+        try {
+            const diagnosis = await AppDataSource.getRepository(Diagnosis).findBy({ patient: patiendId })
+            return diagnosis
+
+        } catch (err) {
+            console.log(err)
+            throw createhttperror[500]('internal server error')
+        }
+    }
+}

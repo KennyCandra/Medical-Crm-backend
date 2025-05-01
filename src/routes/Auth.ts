@@ -15,4 +15,6 @@ router.get('/refreshToken', AuthController.refreshToken)
 
 router.get('/:nid', AuthController.searchPatient)
 
+router.delete('/logout' , AuthController.logOut)
+
 export default router

@@ -5,7 +5,7 @@ import createhttperror from 'http-errors'
 import { QueryRunner } from "typeorm";
 
 class prescribedDrugModule {
-    static async createPrescribedDrug(drugName: Drug, dose: string, frequency: string, queryRunner: QueryRunner) {
+    static async createPrescribedDrug(drugName: Drug, dose: string, frequency: string) {
 
         try {
             const prescribedDrugRep = await AppDataSource.getRepository(PrescribedDrug)
