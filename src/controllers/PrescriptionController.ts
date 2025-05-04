@@ -8,6 +8,7 @@ import prescribedDrugModule from "../modules/PrescribedDrugs/prescribedDrugModul
 import DrugsModule from "../modules/DrugsModule/DrugsModule";
 import { Drug } from "../entities/drug";
 import createhttperror from 'http-errors'
+import { Prescription } from "../entities/prescription";
 
 export default class PrescriptionController {
 
@@ -75,7 +76,7 @@ export default class PrescriptionController {
             const patientId = await PatientProfileModules.findPatientById(userId)
             const prescription = await prescriptionModule.findPrescription(prescriptionId, ['patient'])
 
-            if(patientId === null){
+            if (patientId === null) {
                 throw createhttperror.NotFound("you are not a patient")
             }
 
@@ -119,14 +120,22 @@ export default class PrescriptionController {
     static async fetchManyPrescriptions(req: Request, res: Response, next: NextFunction) {
         try {
             const { doctorId, patientId } = req.params
-            let prescriptions;
+            let prescriptions: Prescription[];
 
             { doctorId ? prescriptions = await prescriptionModule.findManyPrescriptions(doctorId, null) : prescriptions = await prescriptionModule.findManyPrescriptions(null, patientId) }
             if (!prescriptions) {
                 throw createhttperror.NotFound("can't find this")
             }
+            const completedPresc = prescriptions.filter(presc => presc.status === 'done').length;
+            const notCompletedPresc = prescriptions.filter(presc => presc.status === 'taking').length;
 
-            res.status(200).json({ message: 'here', prescriptions })
+
+            res.status(200).json({
+                message: 'here',
+                prescriptions,
+                completed: completedPresc,
+                notCompleted: notCompletedPresc
+            });
         } catch (err) {
             next(err)
         }

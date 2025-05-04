@@ -26,14 +26,13 @@ export default class PallergyModule {
         try {
             const allergies = await AppDataSource.getRepository(Pallergy)
                 .createQueryBuilder('p')
-                .select('allergy.name', 'allergyName')
+                .select('allergy.name', 'allergy')
+                .addSelect('p.id', 'id')
                 .leftJoin('p.patient', 'patient')
                 .leftJoin('p.allergy', 'allergy')
                 .where('patient.id = :patientId', { patientId: patientId })
-                .distinct(true)
                 .getRawMany();
 
-            console.log(allergies);
             return allergies;
         } catch (err) {
             console.log(err);

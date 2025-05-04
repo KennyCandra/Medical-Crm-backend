@@ -26,9 +26,9 @@ export class DiagnosisController {
 
     static async fetchForPatient(req: Request, res: Response, next: NextFunction) {
         try {
-            const { patientId } = req.params
+            const { nid } = req.params
 
-            const patient = await PatientProfileModules.findPatientbyNid(patientId)
+            const patient = await PatientProfileModules.findPatientbyNid(nid)
             const diagnosis = await DiagnosisModule.findForPatient(patient)
 
             res.status(200).json({ diagnosis, message: 'here is your diagnosis' })

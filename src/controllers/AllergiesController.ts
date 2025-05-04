@@ -15,11 +15,10 @@ export default class AllergiesController {
                 throw createhttperror(404, "Patient not found");
             }
             const allergies = await PallergyModule.findForPatient(patient.id);
-            const allergiesNames = allergies.map((allergy) => allergy.allergyName);
             if (!allergies) {
                 throw createhttperror(404, "No allergies found for this patient");
             }
-            res.status(200).json(allergiesNames);
+            res.status(200).json({ allergies: allergies });
         } catch (error) {
             next(error);
         }

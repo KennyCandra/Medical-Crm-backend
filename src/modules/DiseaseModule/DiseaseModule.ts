@@ -8,7 +8,6 @@ export default class DiseaseModule {
     static async findDiseaseById(id: string) {
         try {
             const disease = await AppDataSource.getRepository(Disease).findOneBy({ id: id })
-            console.log(disease)
             return disease
 
         } catch {

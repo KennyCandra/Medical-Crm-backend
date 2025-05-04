@@ -66,7 +66,10 @@ class prescriptionModule {
                 .leftJoinAndSelect('prescription.doctor', 'doctor')
                 .leftJoinAndSelect('prescription.patient', 'patient')
                 .leftJoinAndSelect('doctor.user', 'doctorProfile')
-                .leftJoinAndSelect('patient.user', 'patientProfile');
+                .leftJoinAndSelect('patient.user', 'patientProfile')
+                .orderBy('CASE WHEN prescription.status = \'taking\' THEN 1 WHEN prescription.status = \'done\' THEN 2 END' , 'ASC')
+                .addOrderBy('prescription.start_date' , "DESC");
+
 
             if (doctorId) {
                 queryBuilder.where('doctor.id = :id', { id: doctorId });
@@ -92,7 +95,6 @@ class prescriptionModule {
                 .select('d.name', 'name')
                 .distinct(true)
                 .getRawMany();
-            console.log(prescriptions)
             return prescriptions
 
         } catch (err) {

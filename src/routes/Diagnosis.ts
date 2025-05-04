@@ -6,7 +6,7 @@ const router = Router()
 
 router.post('/create', DiagnosisController.createDiagonsis)
 
-router.get('/:patientId', DiagnosisController.fetchForPatient)
+router.get('/:nid', DiagnosisController.fetchForPatient)
 
 
 

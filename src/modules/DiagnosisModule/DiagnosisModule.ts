@@ -23,10 +23,15 @@ export default class DiagnosisModule {
 
     }
 
-    static async findForPatient(patiendId: PatientProfile): Promise<Diagnosis[]> {
+    static async findForPatient(patientId: PatientProfile): Promise<Diagnosis[]> {
         try {
-            const diagnosis = await AppDataSource.getRepository(Diagnosis).findBy({ patient: patiendId })
-            return diagnosis
+            const diagnoses = await AppDataSource.getRepository(Diagnosis)
+                .find({
+                    where: { patient: { id: patientId.id } },
+                    relations: ["disease"]
+                });
+
+            return diagnoses
 
         } catch (err) {
             console.log(err)

@@ -40,7 +40,6 @@ class DrugController {
                 - Respond ONLY with points 1, 2, and 3.
                 The drugs are: ${drug}.`,
             });
-            console.log(response.text)
             const text = displayTextAfterNumbers(response.text);
             res.status(200).json({ text })
         } catch (err) {

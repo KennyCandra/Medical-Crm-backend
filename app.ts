@@ -16,6 +16,8 @@ import cookiesParser from 'cookie-parser'
 import { GoogleGenAI } from '@google/genai'
 import DiseaseRoutes from './src/routes/Disease'
 import AllergyRoutes from './src/routes/Allergies'
+import { User } from './src/entities/user'
+import bcrypt from 'bcrypt'
 
 const app = express()
 app.use(express.json())

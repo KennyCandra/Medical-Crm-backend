@@ -1,4 +1,5 @@
 import { AppDataSource } from "../../../ormconfig";
+import { DoctorProfile } from "../../entities/doctorProfile";
 import { Specialization } from "../../entities/specialization";
 import createHttpError from 'http-errors'
 
@@ -18,6 +19,19 @@ export class SpecializationModules {
         try {
             const specializations = await AppDataSource.getRepository(Specialization).find()
             return specializations
+        } catch (err) {
+            throw createHttpError.InternalServerError['internal server error']
+        }
+    }
+
+    static async doctorSpecialization(doctorId: string) {
+        try {
+            const doctorSpecialization = await AppDataSource.getRepository(DoctorProfile)
+                .createQueryBuilder('d')
+                .leftJoinAndSelect('d.specialization', 's')
+                .where('d.id = :id', { id: doctorId })
+                .getOne()
+            return doctorSpecialization.specialization.name
         } catch (err) {
             throw createHttpError.InternalServerError['internal server error']
         }

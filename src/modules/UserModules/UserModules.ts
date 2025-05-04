@@ -1,6 +1,7 @@
 import { User } from "../../entities/user";
 import bcrypt from 'bcrypt'
 import createHttpError from 'http-errors'
+import { AppDataSource } from "../../../ormconfig";
 
 export default class UserModules {
 
@@ -32,6 +33,16 @@ export default class UserModules {
             } else {
                 throw createHttpError.InternalServerError('server error');
             }
+        }
+    }
+
+    static async findUserByNid(nid: string) {
+        try {
+            const user = await AppDataSource.getRepository(User).findOneBy({ NID: nid })
+            return user
+        } catch (err) {
+            console.log(err)
+            throw createHttpError(500, 'internal server error')
         }
     }
 
