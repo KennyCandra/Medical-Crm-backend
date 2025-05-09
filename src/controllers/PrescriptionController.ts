@@ -13,7 +13,7 @@ import { Prescription } from "../entities/prescription";
 export default class PrescriptionController {
 
     static async createPrescription(req: Request, res: Response, next: NextFunction) {
-        const { doctorId, patientId, medication } = req.body;
+        const { doctorId, patientId, medication, description } = req.body;
         const queryRunner = await AppDataSource.createQueryRunner()
         await queryRunner.connect()
         await queryRunner.startTransaction()
@@ -44,6 +44,7 @@ export default class PrescriptionController {
                     drug,
                     med.dose,
                     med.frequency,
+                    med.time
                 )
                 prescribedDrugs.push(prescribedDrug)
             }
@@ -52,7 +53,8 @@ export default class PrescriptionController {
             const newPrescrition = await prescriptionModule.createPrescription({
                 doctor: doctor,
                 patient: patient,
-                prescribedDrug: prescribedDrugs
+                prescribedDrug: prescribedDrugs,
+                description: description
             })
 
             await queryRunner.manager.save(newPrescrition)

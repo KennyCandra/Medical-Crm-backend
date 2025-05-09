@@ -4,7 +4,6 @@ import displayTextAfterNumbers from "../helpers/displayTextAfterNumbers";
 import { ai } from "../../app";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
 import prescriptionModule from "../modules/Prescription/PrescriptionModule";
-import AllergyModule from "../modules/AllergiesModule/AllergyModule";
 import PallergyModule from "../modules/PallergyModule/PallergyModule";
 import extractJsonFromString from "../helpers/JsonCut";
 
@@ -52,6 +51,7 @@ class DrugController {
         try {
             const { nid } = req.params;
             const { newDrugs } = req.query
+            console.log(newDrugs)
             const patient = await PatientProfileModules.findPatientbyNid(nid)
             const drugs = await prescriptionModule.fetchDrugsFromPrescriptinsWithStatusTakingForSinglePatient(patient.id)
             let oldDrugs = drugs?.map(d => {
@@ -59,15 +59,14 @@ class DrugController {
             }) || ''
             const allergies = await PallergyModule.findForPatient(patient.id)
             const oldAllergies = allergies?.map(d => {
-                return d.allergyName
+                return d.allergy
             }) || ''
+            console.log(allergies)
             const response = await ai.models.generateContent({
                 model: process.env.GEMINI_MODEL,
                 contents: `Check for drug-drug interactions between: ${Array.isArray(newDrugs) ? newDrugs.join(', ') : newDrugs} and the patient’s current medications: ${oldDrugs}.
                 Also, check if the patient is allergic to any component of: ${Array.isArray(newDrugs) ? newDrugs.join(', ') : newDrugs}. Patient allergies: ${oldAllergies}.
-                
                 Respond with a **valid JSON** object in the following format — no extra text:
-                
                 {
                   "hasInteractions": true/false,
                   "interactions": [
@@ -88,7 +87,6 @@ class DrugController {
                   ],
                   "recommendation": "If any interaction or allergy is found, provide a clear clinical recommendation. If none found, return: 'Safe to prescribe based on available information.'"
                 }
-                
                 Severity levels:
                 - Critical: Immediate Action Required – Contraindicated
                 - Serious: Use Alternative – Avoid if possible
@@ -101,7 +99,6 @@ class DrugController {
                 3. Be specific and factual in all outputs
                 4. No extra text outside the JSON
                 `
-
             });
 
 

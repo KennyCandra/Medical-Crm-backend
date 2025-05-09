@@ -27,6 +27,10 @@ export class DiagnosisController {
     static async fetchForPatient(req: Request, res: Response, next: NextFunction) {
         try {
             const { nid } = req.params
+            if (nid.length !== 14) {
+                res.status(404).json({ message: 'can"t find this' })
+                return
+            }
 
             const patient = await PatientProfileModules.findPatientbyNid(nid)
             const diagnosis = await DiagnosisModule.findForPatient(patient)

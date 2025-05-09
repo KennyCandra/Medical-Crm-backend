@@ -6,12 +6,13 @@ import { PrescribedDrug } from "../../entities/prescribedDrug";
 import { AppDataSource } from "../../../ormconfig";
 
 class prescriptionModule {
-    static async createPrescription({ patient, doctor, prescribedDrug }: { patient: PatientProfile, doctor: DoctorProfile, prescribedDrug: PrescribedDrug[] }) {
+    static async createPrescription({ patient, doctor, prescribedDrug, description }: { description: string, patient: PatientProfile, doctor: DoctorProfile, prescribedDrug: PrescribedDrug[] }) {
         try {
             const newPrescrition = new Prescription()
             newPrescrition.doctor = doctor;
             newPrescrition.patient = patient;
             newPrescrition.prescribedDrugs = prescribedDrug
+            newPrescrition.description = description
             newPrescrition.start_date = new Date()
 
             return newPrescrition
@@ -67,8 +68,8 @@ class prescriptionModule {
                 .leftJoinAndSelect('prescription.patient', 'patient')
                 .leftJoinAndSelect('doctor.user', 'doctorProfile')
                 .leftJoinAndSelect('patient.user', 'patientProfile')
-                .orderBy('CASE WHEN prescription.status = \'taking\' THEN 1 WHEN prescription.status = \'done\' THEN 2 END' , 'ASC')
-                .addOrderBy('prescription.start_date' , "DESC");
+                .orderBy('CASE WHEN prescription.status = \'taking\' THEN 1 WHEN prescription.status = \'done\' THEN 2 END', 'ASC')
+                .addOrderBy('prescription.start_date', "DESC");
 
 
             if (doctorId) {

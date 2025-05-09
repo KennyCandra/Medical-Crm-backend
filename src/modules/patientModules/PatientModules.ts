@@ -47,4 +47,20 @@ export default class PatientProfileModules {
             throw createHttpError(500, 'Internal server error');
         }
     }
+
+
+
+    static async findPatientByOriginalIdId(id: string) {
+        try {
+            const patientUser = await AppDataSource.getRepository(PatientProfile)
+                .createQueryBuilder('user')
+                .where(`user.id = :id`, { id })
+                .getOne();
+
+            return patientUser;
+        } catch (err) {
+            if (err.statusCode === 404) throw err;
+            throw createHttpError(500, 'Internal server error');
+        }
+    }
 }

@@ -3,6 +3,7 @@ import { Specialization } from "./specialization"
 import { User } from "./user"
 import { Diagnosis } from "./diagnosis"
 import { Prescription } from "./prescription"
+import { ReportsEntity } from "./ReportsEntity"
 
 @Entity()
 export class DoctorProfile {
@@ -24,4 +25,7 @@ export class DoctorProfile {
 
     @OneToMany(() => Prescription, (prescription) => prescription.doctor, { nullable: true })
     prescriptions: Prescription[]
+
+    @OneToMany(() => ReportsEntity, (reports) => reports.doctor)
+    reports: ReportsEntity[]
 }

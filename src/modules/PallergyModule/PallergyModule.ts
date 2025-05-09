@@ -22,7 +22,7 @@ export default class PallergyModule {
 
     }
 
-    static async findForPatient(patientId: string): Promise<PallergyCreation[]> {
+    static async findForPatient(patientId: string) {
         try {
             const allergies = await AppDataSource.getRepository(Pallergy)
                 .createQueryBuilder('p')

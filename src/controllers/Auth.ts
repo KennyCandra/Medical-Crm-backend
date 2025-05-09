@@ -22,7 +22,7 @@ class AuthController {
         await queryRunner.startTransaction();
 
         try {
-            const { firstName, lastName, gender, NID, password, role } = req.body;
+            const { firstName, lastName, gender, NID, password, role , birth_date } = req.body;
 
             if (role === 'owner') {
                 throw createHttpError.BadRequest('Owner cannot be created');
@@ -38,6 +38,7 @@ class AuthController {
                 NID,
                 password,
                 role,
+                birth_date
             )
             await queryRunner.manager.save(newUser)
 

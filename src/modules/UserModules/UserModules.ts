@@ -11,7 +11,8 @@ export default class UserModules {
         gender: "male" | "female",
         NID: string,
         password: string,
-        role: "doctor" | "patient" | "owner") {
+        role: "doctor" | "patient" | "owner",
+        birth_date: string) {
 
         try {
             const hashedPw = await bcrypt.hash(password, 12)
@@ -22,7 +23,7 @@ export default class UserModules {
             newUser.last_name = lName
             newUser.role = role
             newUser.password = hashedPw
-            newUser.birth_date = new Date()
+            newUser.birth_date = new Date(birth_date)
 
 
             return newUser
