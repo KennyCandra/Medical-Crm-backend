@@ -31,7 +31,7 @@ app.use('/drug', DrugRoutes)
 app.use('/analytics', AnalyticsRoutes)
 app.use('/allergy', AllergyRoutes)
 app.use('/reports', ReportRouter)
-app.use('/', (req, res) => {
+app.get('/', (req, res) => {
     res.send('Hello World')
 })
 export const ai = new GoogleGenAI({
