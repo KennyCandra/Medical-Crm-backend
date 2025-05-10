@@ -6,8 +6,6 @@
   },
   "deploy": {
     "startCommand": "npm start",
-    "healthcheckPath": "/",
-    "healthcheckTimeout": 100,
     "runtime": "V2",
     "numReplicas": 1,
     "sleepApplication": false,
