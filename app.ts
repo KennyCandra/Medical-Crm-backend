@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 dotenv.config()
 import express from 'express'
-import { AppDataSource } from './src/ormconfig'
+import { AppDataSource } from './src/ormconfig.js'
 import { Response, Request, NextFunction, ErrorRequestHandler } from 'express'
 import createHttpError from "http-errors";
 import cors from 'cors'
