@@ -5,9 +5,9 @@
   "main": "app.ts",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --exec ts-node ./app.ts",
+    "dev": "NODE_ENV=development nodemon --exec ts-node ./app.ts",
     "build": "tsc",
-    "start": "node dist/app.js"
+    "start": "NODE_ENV=production node dist/app.js"
   },
   "author": "kenny",
   "license": "ISC",
