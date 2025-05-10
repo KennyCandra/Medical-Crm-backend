@@ -5,15 +5,16 @@
   "main": "app.ts",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec ts-node ./app.ts",
-     "start": "node --loader ts-node/esm app.ts"
+    "build": "tsc",
+    "start": "node dist/app.js"
   },
   "author": "kenny",
   "license": "ISC",
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.18",
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.14",
     "dotenv": "^16.4.7",
