@@ -3,6 +3,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const isProd = process.env.NODE_ENV === 'production';
+const entitiesDir = isProd ? "dist/entities/*.js" : "src/entities/*.ts";
+const migrationsDir = isProd ? "dist/migrations/*.js" : "src/migrations/*.ts";
+
 export const AppDataSource = new DataSource({
     type: "postgres",
     host: process.env.DB_HOST,
@@ -12,8 +16,8 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME,
     synchronize: true,
     logging: false,
-    entities: ["src/entities/*.ts"],
-    migrations: ["src/migrations/*.ts"],
+    entities: [entitiesDir],
+    migrations: [migrationsDir],
     subscribers: [],
     schema: 'public'
 });
