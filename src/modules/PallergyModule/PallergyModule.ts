@@ -1,7 +1,7 @@
-import { AppDataSource } from "../../../ormconfig";
-import { Allergy } from "../../entities/Allergy";
-import { Pallergy } from "../../entities/Pallergy";
-import { PatientProfile } from "../../entities/patientProfile";
+import { AppDataSource } from "../../../ormconfig"
+import { Allergy } from "../../entities/Allergy"
+import { Pallergy } from "../../entities/Pallergy"
+import { PatientProfile } from "../../entities/patientProfile"
 import createhttperror from 'http-errors'
 
 interface PallergyCreation {

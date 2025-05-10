@@ -1,6 +1,6 @@
-import { AppDataSource } from "../../../ormconfig";
-import { DoctorProfile } from "../../entities/doctorProfile";
-import { Specialization } from "../../entities/specialization";
+import { AppDataSource } from "../../../ormconfig"
+import { DoctorProfile } from "../../entities/doctorProfile"
+import { Specialization } from "../../entities/specialization"
 import createHttpError from 'http-errors'
 
 export class SpecializationModules {

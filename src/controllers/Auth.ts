@@ -1,19 +1,19 @@
 import { Response, Request, NextFunction } from "express"
-import { AppDataSource } from "../../ormconfig"
-import { User } from "../entities/user"
+import { AppDataSource } from "../../ormconfig";
+import { User } from "../entities/user";
 import createHttpError from "http-errors";
 import bcrypt from 'bcrypt'
 import UserModules from "../modules/UserModules/UserModules";
 import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
 import { SpecializationModules } from "../modules/SpecializationModules/SpecializationModules";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
-import { sign } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { verifyToken } from "../helpers/verifyToken";
 import prescriptionModule from "../modules/Prescription/PrescriptionModule";
 import PallergyModule from "../modules/PallergyModule/PallergyModule";
 import DiagnosisModule from "../modules/DiagnosisModule/DiagnosisModule";
 
-
+const sign = jwt.sign;
 class AuthController {
 
     static async SignUp(req: Request, res: Response, next: NextFunction) {

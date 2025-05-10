@@ -1,5 +1,4 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { v4 as uuidv4 } from 'uuid';
 import { Pallergy } from "./Pallergy";
 
 @Entity()
@@ -13,3 +12,4 @@ export class Allergy {
     @OneToMany(() => Pallergy, (pallergy) => pallergy.allergy)
     patientAllergies: Pallergy[]
 }
+

@@ -1,6 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Classification } from "./Classification";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 @Entity()
 export class Category {
@@ -16,3 +16,4 @@ export class Category {
     @OneToMany(() => Classification, classification => classification.category)
     classifications: Classification[];
 }
+

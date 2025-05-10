@@ -1,8 +1,8 @@
-import { AppDataSource } from "../../../ormconfig";
-import { Diagnosis } from "../../entities/diagnosis";
-import { Disease } from "../../entities/disease";
-import { DoctorProfile } from "../../entities/doctorProfile";
-import { PatientProfile } from "../../entities/patientProfile";
+import { AppDataSource } from "../../../ormconfig"
+import { Diagnosis } from "../../entities/diagnosis"
+import { Disease } from "../../entities/disease"
+import { DoctorProfile } from "../../entities/doctorProfile"
+import { PatientProfile } from "../../entities/patientProfile"
 import createhttperror from 'http-errors'
 
 export default class DiagnosisModule {

@@ -15,3 +15,4 @@ export class Specialization {
     @OneToMany(() => DoctorProfile, (doctorProfile) => doctorProfile.specialization, { nullable: true })
     doctors: DoctorProfile[]
 }
+

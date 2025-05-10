@@ -1,5 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Drug } from "./drug";
+import { Column, Entity, JoinColumn, ManyToOne,PrimaryGeneratedColumn } from "typeorm";
 import { PatientProfile } from "./patientProfile";
 import { DoctorProfile } from "./doctorProfile";
 import { PrescribedDrug } from "./prescribedDrug";
@@ -27,3 +26,4 @@ export class ReportsEntity {
     @Column({ default: false })
     reviewed: boolean
 }
+

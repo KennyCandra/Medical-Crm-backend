@@ -1,8 +1,8 @@
-import { AppDataSource } from "../../../ormconfig";
-import { DoctorProfile } from "../../entities/doctorProfile";
-import { PatientProfile } from "../../entities/patientProfile";
-import { PrescribedDrug } from "../../entities/prescribedDrug";
-import { ReportsEntity } from "../../entities/ReportsEntity";
+import { AppDataSource } from "../../../ormconfig"
+import { DoctorProfile } from "../../entities/doctorProfile"
+import { PatientProfile } from "../../entities/patientProfile"
+import { PrescribedDrug } from "../../entities/prescribedDrug"
+import { ReportsEntity } from "../../entities/ReportsEntity"
 
 
 export default class ReportsEntityModule {

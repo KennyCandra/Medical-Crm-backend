@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 import { Disease } from "./disease";
 import { PatientProfile } from "./patientProfile";
 import { DoctorProfile } from "./doctorProfile";
@@ -28,3 +28,5 @@ export class Diagnosis {
     diagnosed_at: Date;
 
 }
+
+

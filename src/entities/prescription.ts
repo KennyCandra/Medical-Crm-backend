@@ -26,3 +26,5 @@ export class Prescription {
     @OneToMany(() => PrescribedDrug, (prescribedDrug) => prescribedDrug.prescription)
     prescribedDrugs: PrescribedDrug[];
 }
+
+

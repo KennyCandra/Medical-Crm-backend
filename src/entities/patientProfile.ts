@@ -1,9 +1,9 @@
 import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm"
-import { Prescription } from "./prescription"
-import { User } from "./user"
-import { Diagnosis } from "./diagnosis"
-import { Pallergy } from "./Pallergy"
-import { ReportsEntity } from "./ReportsEntity"
+import { Prescription } from "./prescription";
+import { User } from "./user";
+import { Diagnosis } from "./diagnosis";
+import { Pallergy } from "./Pallergy";
+import { ReportsEntity } from "./ReportsEntity";
 
 @Entity()
 export class PatientProfile {
@@ -34,3 +34,5 @@ export class PatientProfile {
     @JoinColumn()
     user: User
 }
+
+

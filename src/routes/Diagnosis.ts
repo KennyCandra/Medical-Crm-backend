@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { DiagnosisController } from "../controllers/DiagnosisController";
 
-const router = Router()
+const router = Router() 
 
 
 router.post('/create', DiagnosisController.createDiagonsis)

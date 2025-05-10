@@ -12,3 +12,5 @@ export class Disease {
     @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.disease)
     diagnoses: Diagnosis[]
 }
+
+

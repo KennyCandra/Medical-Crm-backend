@@ -1,9 +1,9 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm"
-import { Specialization } from "./specialization"
-import { User } from "./user"
-import { Diagnosis } from "./diagnosis"
-import { Prescription } from "./prescription"
-import { ReportsEntity } from "./ReportsEntity"
+import { Specialization } from "./specialization";
+import { User } from "./user";
+import { Diagnosis } from "./diagnosis";
+import { Prescription } from "./prescription";
+import { ReportsEntity } from "./ReportsEntity";
 
 @Entity()
 export class DoctorProfile {
@@ -29,3 +29,5 @@ export class DoctorProfile {
     @OneToMany(() => ReportsEntity, (reports) => reports.doctor)
     reports: ReportsEntity[]
 }
+
+

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express"
-import DrugsModule from "../modules/DrugsModule/DrugsModule"
+import DrugsModule from "../modules/DrugsModule/DrugsModule";
 import displayTextAfterNumbers from "../helpers/displayTextAfterNumbers";
 import { ai } from "../../app";
 import PatientProfileModules from "../modules/patientModules/PatientModules";

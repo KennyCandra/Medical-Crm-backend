@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import ReportsEntityModule from "../modules/ReportsEntityModule/ReportsEntity";
 import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
-import createhttperror from 'http-errors'
+import createhttperror from "http-errors";
 import { AppDataSource } from "../../ormconfig";
 
 export default class ReportsController {

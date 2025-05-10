@@ -20,7 +20,12 @@ import ReportRouter from './src/routes/ReportsController'
 const app = express()
 app.use(express.json())
 app.use(cookiesParser())
-app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
+app.use(cors({
+    origin: 'https://medical-crm-fronted.vercel.app/',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use('/auth', AuthRoutes)
 app.use('/spec', SpecializationRoutes)
@@ -55,7 +60,8 @@ app.use(
 )
 
 AppDataSource.initialize().then(() => {
-    app.listen(process.env.DB_PORT_SERVER, () => {
-        console.log('started our first server')
+    const port = process.env.DB_PORT_SERVER
+    app.listen(port, () => {
+        console.log('started our first server', port)
     })
 })

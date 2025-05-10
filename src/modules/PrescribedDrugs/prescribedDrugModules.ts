@@ -1,8 +1,7 @@
-import { PrescribedDrug } from "../../entities/prescribedDrug";
-import { Drug } from "../../entities/drug";
-import { AppDataSource } from "../../../ormconfig";
+import { PrescribedDrug } from "../../entities/prescribedDrug"
+import { Drug } from "../../entities/drug"
+import { AppDataSource } from "../../../ormconfig"
 import createhttperror from 'http-errors'
-import { QueryRunner } from "typeorm";
 
 class prescribedDrugModule {
     static async createPrescribedDrug(drugName: Drug, dose: string, frequency: string, time: "before" | "after") {

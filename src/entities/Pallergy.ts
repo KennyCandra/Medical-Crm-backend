@@ -1,5 +1,4 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { v4 as uuidv4 } from 'uuid';
 import { PatientProfile } from "./patientProfile";
 import { Allergy } from "./Allergy";
 
@@ -16,3 +15,5 @@ export class Pallergy {
     @JoinColumn()
     allergy: Allergy;
 }
+
+
