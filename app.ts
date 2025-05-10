@@ -22,7 +22,13 @@ import 'reflect-metadata';
 const app = express()
 app.use(express.json())
 app.use(cookiesParser())
-app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
+app.use(cors({
+    credentials: true,
+    origin: [
+        "http://localhost:5173",
+        process.env.FRONTEND_URL || "https://your-frontend-domain.com"
+    ]
+}));
 
 app.use('/auth', AuthRoutes)
 app.use('/spec', SpecializationRoutes)
@@ -59,7 +65,8 @@ app.use(
 )
 
 AppDataSource.initialize().then(() => {
-    app.listen(process.env.DB_PORT_SERVER, () => {
-        console.log('started our first server')
-    })
+    const PORT = process.env.PORT || process.env.DB_PORT_SERVER || 3000;
+    app.listen(PORT, () => {
+        console.log(`Server started on port ${PORT}`);
+    });
 })
