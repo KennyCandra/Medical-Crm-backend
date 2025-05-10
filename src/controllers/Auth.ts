@@ -1,5 +1,5 @@
 import { Response, Request, NextFunction } from "express"
-import { AppDataSource } from "../../ormconfig"
+import { AppDataSource } from "../ormconfig"
 import { User } from "../entities/user"
 import createHttpError from "http-errors";
 import bcrypt from 'bcrypt'

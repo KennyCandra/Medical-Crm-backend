@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
 import createhttperror from "http-errors";
-import { AppDataSource } from "../../ormconfig";
+import { AppDataSource } from "../ormconfig";
 import { Pallergy } from "../entities/Pallergy";
 import AllergyModule from "../modules/AllergiesModule/AllergyModule";
 import PallergyModule from "../modules/PallergyModule/PallergyModule";

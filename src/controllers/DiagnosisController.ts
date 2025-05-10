@@ -3,7 +3,7 @@ import PatientProfileModules from "../modules/patientModules/PatientModules";
 import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
 import DiagnosisModule from "../modules/DiagnosisModule/DiagnosisModule";
 import DiseaseModule from "../modules/DiseaseModule/DiseaseModule";
-import { AppDataSource } from "../../ormconfig";
+import { AppDataSource } from "../ormconfig";
 
 export class DiagnosisController {
     static async createDiagonsis(req: Request, res: Response, next: NextFunction) {

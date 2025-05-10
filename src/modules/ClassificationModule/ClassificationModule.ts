@@ -1,4 +1,4 @@
-import { AppDataSource } from "../../../ormconfig"
+import { AppDataSource } from "../../ormconfig"
 import { Classification } from "../../entities/Classification"
 
 export default class ClassificationModule {

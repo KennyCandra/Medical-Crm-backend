@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { AppDataSource } from "../../ormconfig";
+import { AppDataSource } from "../ormconfig";
 import { Category } from "../entities/Category";
 import { Classification } from "../entities/Classification";
 import { Drug } from "../entities/drug";

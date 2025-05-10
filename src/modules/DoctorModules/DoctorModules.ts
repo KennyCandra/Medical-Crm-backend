@@ -2,7 +2,7 @@ import { DoctorProfile } from "../../entities/doctorProfile";
 import createHttpError from 'http-errors'
 import { User } from "../../entities/user";
 import { Specialization } from "../../entities/specialization";
-import { AppDataSource } from "../../../ormconfig";
+import { AppDataSource } from "../../ormconfig";
 
 export default class DoctorProfileModules {
 

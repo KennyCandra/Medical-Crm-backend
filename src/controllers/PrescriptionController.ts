@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { AppDataSource } from "../../ormconfig";
+import { AppDataSource } from "../ormconfig";
 import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
 import prescriptionModule from "../modules/Prescription/PrescriptionModule";

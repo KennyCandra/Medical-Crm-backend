@@ -1,6 +1,6 @@
 import { PrescribedDrug } from "../../entities/prescribedDrug";
 import { Drug } from "../../entities/drug";
-import { AppDataSource } from "../../../ormconfig";
+import { AppDataSource } from "../../ormconfig";
 import createhttperror from 'http-errors'
 import { QueryRunner } from "typeorm";
 

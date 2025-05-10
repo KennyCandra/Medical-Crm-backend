@@ -1,4 +1,4 @@
-import { AppDataSource } from "../../../ormconfig"
+import { AppDataSource } from "../../ormconfig"
 import { Category } from "../../entities/Category"
 
 export default class CategoryModule {

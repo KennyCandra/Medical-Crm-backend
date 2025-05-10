@@ -1,6 +1,6 @@
 import { User } from "../../entities/user";
 import { PatientProfile } from '../../entities/patientProfile';
-import { AppDataSource } from "../../../ormconfig";
+import { AppDataSource } from "../../ormconfig";
 import createHttpError from 'http-errors'
 
 export default class PatientProfileModules {
