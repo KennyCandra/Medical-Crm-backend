@@ -16,6 +16,8 @@ import { GoogleGenAI } from '@google/genai'
 import DiseaseRoutes from './src/routes/Disease'
 import AllergyRoutes from './src/routes/Allergies'
 import ReportRouter from './src/routes/ReportsController'
+import 'reflect-metadata';
+
 
 const app = express()
 app.use(express.json())
