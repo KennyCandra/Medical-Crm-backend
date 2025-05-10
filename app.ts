@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 dotenv.config()
 import express from 'express'
-import { AppDataSource } from './ormconfig'
+import { AppDataSource } from './src/ormconfig.js'
 import { Response, Request, NextFunction, ErrorRequestHandler } from 'express'
 import createHttpError from "http-errors";
 import cors from 'cors'
@@ -16,6 +16,8 @@ import { GoogleGenAI } from '@google/genai'
 import DiseaseRoutes from './src/routes/Disease'
 import AllergyRoutes from './src/routes/Allergies'
 import ReportRouter from './src/routes/ReportsController'
+import 'reflect-metadata';
+
 
 const app = express()
 app.use(express.json())
@@ -37,7 +39,9 @@ app.use('/drug', DrugRoutes)
 app.use('/analytics', AnalyticsRoutes)
 app.use('/allergy', AllergyRoutes)
 app.use('/reports', ReportRouter)
-
+app.get('/', (req, res) => {
+    res.send('Hello World')
+})
 export const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
 });

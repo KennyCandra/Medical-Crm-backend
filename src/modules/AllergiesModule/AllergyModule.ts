@@ -1,4 +1,4 @@
-import { AppDataSource } from "../../../ormconfig"
+import { AppDataSource } from "../../ormconfig"
 import { Allergy } from "../../entities/Allergy"
 import createHttpError from "http-errors"
 

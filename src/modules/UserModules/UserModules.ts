@@ -1,7 +1,7 @@
 import { User } from "../../entities/user";
 import bcrypt from 'bcrypt'
 import createHttpError from 'http-errors'
-import { AppDataSource } from "../../../ormconfig";
+import { AppDataSource } from "../../ormconfig";
 
 export default class UserModules {
 

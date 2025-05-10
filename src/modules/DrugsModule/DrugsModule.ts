@@ -1,5 +1,5 @@
 import createhttperror from 'http-errors'
-import { AppDataSource } from "../../../ormconfig";
+import { AppDataSource } from "../../ormconfig";
 import { Drug } from "../../entities/drug";
 
 class DrugsModule {

@@ -1,4 +1,4 @@
-import { AppDataSource } from "../../../ormconfig";
+import { AppDataSource } from "../../ormconfig";
 import { Diagnosis } from "../../entities/diagnosis";
 import { Disease } from "../../entities/disease";
 import { DoctorProfile } from "../../entities/doctorProfile";

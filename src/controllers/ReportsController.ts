@@ -3,7 +3,7 @@ import ReportsEntityModule from "../modules/ReportsEntityModule/ReportsEntity";
 import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
 import PatientProfileModules from "../modules/patientModules/PatientModules";
 import createhttperror from 'http-errors'
-import { AppDataSource } from "../../ormconfig";
+import { AppDataSource } from "../ormconfig";
 
 export default class ReportsController {
     static async createReport(req: Request, res: Response, next: NextFunction): Promise<void> {
