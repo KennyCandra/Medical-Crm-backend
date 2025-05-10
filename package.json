@@ -1,24 +1,21 @@
 {
   "name": "medicalcrm",
   "version": "1.0.0",
-  "description": "medical crm",
+  "description": "medical rm",
+  "main": "app.ts",
   "type": "module",
-  "main": "dist/app.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/app.js",
-    "dev": "nodemon --exec ts-node ./app.ts"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --exec ts-node ./app.ts",
+     "start": "node --loader ts-node/esm app.ts"
   },
   "author": "kenny",
   "license": "ISC",
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
-    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
-    "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.13.14",
-    "@types/uuid": "^9.0.8",
     "dotenv": "^16.4.7",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
@@ -26,6 +23,7 @@
   },
   "dependencies": {
     "@google/genai": "^0.10.0",
+    "@tailwindcss/cli": "^4.1.3",
     "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.7",
@@ -35,9 +33,7 @@
     "pg": "^8.14.1",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.21",
+    "uninstall": "^0.0.0",
     "uuid": "^11.1.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
