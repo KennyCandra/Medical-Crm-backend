@@ -2,6 +2,8 @@ import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn
 import { Prescription } from "./prescription"
 import { User } from "./user"
 import { Diagnosis } from "./diagnosis"
+import { Pallergy } from "./Pallergy"
+import { ReportsEntity } from "./ReportsEntity"
 
 @Entity()
 export class PatientProfile {
@@ -22,7 +24,13 @@ export class PatientProfile {
     @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.patient)
     patientDiagnoses: Diagnosis[]
 
-    @OneToOne(() => User , (user) => user.patientProfile)
+    @OneToMany(() => ReportsEntity, (reports) => reports.patient)
+    reports: ReportsEntity[]
+
+    @OneToMany(() => Pallergy, (Pallergy) => Pallergy.patient)
+    patientAllergies: Pallergy[]
+
+    @OneToOne(() => User, (user) => user.patientProfile)
     @JoinColumn()
     user: User
 }

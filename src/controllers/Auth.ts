@@ -1,5 +1,5 @@
 import { Response, Request, NextFunction } from "express"
-import { AppDataSource } from "../../ormconfig"
+import { AppDataSource } from "../ormconfig"
 import { User } from "../entities/user"
 import createHttpError from "http-errors";
 import bcrypt from 'bcrypt'
@@ -9,6 +9,9 @@ import { SpecializationModules } from "../modules/SpecializationModules/Speciali
 import PatientProfileModules from "../modules/patientModules/PatientModules";
 import { sign } from "jsonwebtoken";
 import { verifyToken } from "../helpers/verifyToken";
+import prescriptionModule from "../modules/Prescription/PrescriptionModule";
+import PallergyModule from "../modules/PallergyModule/PallergyModule";
+import DiagnosisModule from "../modules/DiagnosisModule/DiagnosisModule";
 
 
 class AuthController {
@@ -19,7 +22,7 @@ class AuthController {
         await queryRunner.startTransaction();
 
         try {
-            const { firstName, lastName, gender, NID, password, role } = req.body;
+            const { firstName, lastName, gender, NID, password, role , birth_date } = req.body;
 
             if (role === 'owner') {
                 throw createHttpError.BadRequest('Owner cannot be created');
@@ -35,6 +38,7 @@ class AuthController {
                 NID,
                 password,
                 role,
+                birth_date
             )
             await queryRunner.manager.save(newUser)
 
@@ -101,6 +105,7 @@ class AuthController {
                 sameSite: 'lax',
                 httpOnly: true
             })
+            user.password = undefined
 
             res.status(200).json({ message: 'Login successful', accessToken, user });
         } catch (err) {
@@ -148,7 +153,6 @@ class AuthController {
             const refreshToken = req.cookies['refresh-token']
             const token = await verifyToken(refreshToken)
             if (token.expired) {
-                console.log(token)
                 res.status(401).json({ message: 'please login again' })
                 return
             }
@@ -160,6 +164,8 @@ class AuthController {
                 'supersecretkey',
                 { expiresIn: '15m' }
             )
+
+            user.password = undefined
 
             res.status(200).json({ accessToken, user })
         }
@@ -197,6 +203,61 @@ class AuthController {
 
         }
         catch (err) {
+            next(err)
+        }
+    }
+
+    static async logOut(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            res.clearCookie('refreshToken', {
+                secure: true,
+                sameSite: 'lax',
+                httpOnly: true
+            })
+
+            res.status(200).json({ message: 'logged out' })
+        }
+        catch (err) {
+            console.log(err)
+            next(err)
+        }
+    }
+
+    static async fetchDoctorData(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { userId } = req.body
+            const doctor = await DoctorProfileModules.findDoctorByid(userId)
+            const speciality = await SpecializationModules.doctorSpecialization(doctor.id)
+            res.status(200).json({ doctor, speciality })
+        }
+        catch (err) {
+            console.log(err)
+            next(err)
+        }
+    }
+
+    static async fetchAllPatientData(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { role } = req.body
+            if (role === 'patient') {
+                res.status(409).json({ message: "you don't have access to this data" })
+                return
+            }
+            const { nid } = req.params
+            const user = await UserModules.findUserByNid(nid)
+            const patient = await PatientProfileModules.findPatientbyNid(nid)
+            const prescriptions = await prescriptionModule.findManyPrescriptions(null, patient.id)
+            const allergies = await PallergyModule.findForPatient(patient.id)
+            const diagnosis = await DiagnosisModule.findForPatient(patient)
+            const diagnoses = diagnosis.map(diag => {
+                return diag.disease.name
+            })
+            user.password = undefined
+            res.status(200).json({ patient, prescriptions, allergies, diagnoses, user })
+
+        }
+        catch (err) {
+            console.log(err)
             next(err)
         }
     }
