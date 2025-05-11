@@ -151,6 +151,7 @@ class AuthController {
     static async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const refreshToken = req.cookies['refresh-token']
+            console.log(refreshToken)
             const token = await verifyToken(refreshToken)
             console.log(token)
             if (token.expired) {
