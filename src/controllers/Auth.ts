@@ -42,7 +42,7 @@ class AuthController {
             )
             await queryRunner.manager.save(newUser)
 
-            if (newUser?.role === "doctor" && newUser !== null) {
+            if (newUser?.role === "doctor") {
                 const specializationEntity = SpecializationModules.isValid(req.body.speciality)
                 const doctor = await DoctorProfileModules.createDoctor({
                     user: newUser,
@@ -152,6 +152,7 @@ class AuthController {
         try {
             const refreshToken = req.cookies['refresh-token']
             const token = await verifyToken(refreshToken)
+            console.log(token)
             if (token.expired) {
                 res.status(401).json({ message: 'please login again' })
                 return
