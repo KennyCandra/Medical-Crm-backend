@@ -20,12 +20,16 @@ import ReportRouter from './src/routes/ReportsController'
 const app = express()
 app.use(express.json())
 app.use(cookiesParser())
-app.use(cors({
-    origin: ['https://medical-crm-fronted.vercel.app', 'http://localhost:5173'],
+
+const corsOptions = {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    maxAge: 86400
+};
+app.use(cors(corsOptions));
 
 app.use('/auth', AuthRoutes)
 app.use('/spec', SpecializationRoutes)
