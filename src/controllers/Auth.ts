@@ -22,7 +22,7 @@ class AuthController {
         await queryRunner.startTransaction();
 
         try {
-            const { firstName, lastName, gender, NID, password, role , birth_date } = req.body;
+            const { firstName, lastName, gender, NID, password, role, birth_date } = req.body;
 
             if (role === 'owner') {
                 throw createHttpError.BadRequest('Owner cannot be created');
@@ -102,8 +102,10 @@ class AuthController {
 
             res.cookie('refresh-token', refreshToken, {
                 secure: true,
-                sameSite: 'lax',
-                httpOnly: true
+                sameSite: 'none',
+                httpOnly: true,
+                path: '/',
+                maxAge: 60 * 60 * 24 * 60 * 1000
             })
             user.password = undefined
 
@@ -151,7 +153,7 @@ class AuthController {
     static async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const refreshToken = req.cookies['refresh-token']
-            console.log(refreshToken)
+            console.log('cookies', req.cookies)
             const token = await verifyToken(refreshToken)
             console.log(token)
             if (token.expired) {
@@ -166,6 +168,21 @@ class AuthController {
                 'supersecretkey',
                 { expiresIn: '15m' }
             )
+
+            const newRefreshToken = sign(
+                { userId: user.id },
+                'supersecretkey',
+                { expiresIn: '60d' }
+            )
+
+
+            res.cookie('refresh-token', newRefreshToken, {
+                secure: true,
+                sameSite: 'none',
+                httpOnly: true,
+                path: '/',
+                maxAge: 60 * 60 * 24 * 60 * 1000
+            })
 
             user.password = undefined
 
