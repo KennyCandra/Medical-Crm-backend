@@ -9,12 +9,8 @@ export class Disease {
     @Column()
     name: string
 
-    @Column({ unique: true })
-    classification: string
-
-    @Column({ type: 'text', nullable: true })
-    description: string
-
     @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.disease)
     diagnoses: Diagnosis[]
 }
+
+

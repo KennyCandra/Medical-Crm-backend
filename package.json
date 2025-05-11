@@ -5,12 +5,15 @@
   "main": "app.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --exec ts-node ./app.ts"
+    "dev": "nodemon --exec ts-node ./app.ts",
+    "build": "tsc",
+    "start": "node ./app.js"
   },
   "author": "kenny",
   "license": "ISC",
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.14",
     "dotenv": "^16.4.7",
@@ -30,6 +33,7 @@
     "pg": "^8.14.1",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.21",
-    "uninstall": "^0.0.0"
+    "uninstall": "^0.0.0",
+    "uuid": "^11.1.0"
   }
 }

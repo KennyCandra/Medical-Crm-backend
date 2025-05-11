@@ -17,3 +17,4 @@ export class Classification {
     @OneToMany(() => Drug, drug => drug.classification)
     drugs: Drug[];
 }
+

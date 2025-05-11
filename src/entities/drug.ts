@@ -22,3 +22,5 @@ export class Drug {
     @OneToMany(() => PrescribedDrug, prescribedDrug => prescribedDrug.drug)
     prescribedDrugs: PrescribedDrug[];
 }
+
+

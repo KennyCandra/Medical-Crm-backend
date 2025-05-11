@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany,  ManyToOne } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from "typeorm";
 import { PatientProfile } from "./patientProfile";
 import { PrescribedDrug } from "./prescribedDrug";
 import { DoctorProfile } from "./doctorProfile";
@@ -14,6 +14,9 @@ export class Prescription {
     @Column({ nullable: true, type: 'enum', enum: ['taking', 'done'], default: 'taking' })
     status: 'taking' | 'done';
 
+    @Column({ nullable: true })
+    description: string
+
     @ManyToOne(() => PatientProfile, (patientProfile) => patientProfile.prescriptions)
     patient: PatientProfile;
 
@@ -23,3 +26,5 @@ export class Prescription {
     @OneToMany(() => PrescribedDrug, (prescribedDrug) => prescribedDrug.prescription)
     prescribedDrugs: PrescribedDrug[];
 }
+
+

@@ -8,13 +8,5 @@ export default function displayTextAfterNumbers(inputString) {
         results.push(match[1].trim());
     }
 
-    if (results.length > 0) {
-        results.forEach((text) => {
-            console.log(text);
-        });
-    } else {
-        console.log("No matching text found in the specified format.");
-    }
-
     return results;
 }
