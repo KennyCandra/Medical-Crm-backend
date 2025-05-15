@@ -3,8 +3,8 @@ import { AppDataSource } from "../../ormconfig";
 import { Category } from "../entities/Category";
 import { Classification } from "../entities/Classification";
 import { Drug } from "../entities/drug";
-import CategoryModule from "../modules/CategoryModule/CategoryModule";
-import ClassificationModule from "../modules/ClassificationModule/ClassificationModule";
+import CategoryModule from "../modules/CategoryModule";
+import ClassificationModule from "../modules/ClassificationModule";
 import createhttperror from 'http-errors'
 import { Disease } from "../entities/disease";
 import { Diagnosis } from "../entities/diagnosis";

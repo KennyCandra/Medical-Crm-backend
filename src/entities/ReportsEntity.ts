@@ -1,8 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne,PrimaryGeneratedColumn } from "typeorm";
-import { PatientProfile } from "./patientProfile";
 import { DoctorProfile } from "./doctorProfile";
 import { PrescribedDrug } from "./prescribedDrug";
-
+import { User } from "./user";
 @Entity()
 export class ReportsEntity {
     @PrimaryGeneratedColumn('uuid')
@@ -11,9 +10,9 @@ export class ReportsEntity {
     @Column({ nullable: false })
     description: string;
 
-    @ManyToOne(() => PatientProfile, patient => patient.reports)
+    @ManyToOne(() => User, patient => patient.reports)
     @JoinColumn()
-    patient: PatientProfile;
+    patient: User;
 
     @ManyToOne(() => DoctorProfile, doctor => doctor.reports)
     @JoinColumn()

@@ -1,15 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { AppDataSource } from "../../ormconfig";
-import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
-import PatientProfileModules from "../modules/patientModules/PatientModules";
-import prescriptionModule from "../modules/Prescription/PrescriptionModule";
+import DoctorProfileModules from "../modules/DoctorModules";
+import prescriptionModule from "../modules/PrescriptionModule";
 import { PrescribedDrug } from "../entities/prescribedDrug";
-import prescribedDrugModule from "../modules/PrescribedDrugs/prescribedDrugModules";
-import DrugsModule from "../modules/DrugsModule/DrugsModule";
+import prescribedDrugModule from "../modules/prescribedDrugModules";
+import DrugsModule from "../modules/DrugsModule";
 import { Drug } from "../entities/drug";
 import createhttperror from 'http-errors'
 import { Prescription } from "../entities/prescription";
-
+import UserModules from "../modules/UserModules";
 export default class PrescriptionController {
 
     static async createPrescription(req: Request, res: Response, next: NextFunction) {
@@ -26,15 +25,10 @@ export default class PrescriptionController {
             }
 
             const doctor = await DoctorProfileModules.findDoctor(doctorId)
-            const patient = await PatientProfileModules.findPatientbyNid(patientId)
+            const patient = await UserModules.findUserByNid(patientId)
 
             if (!doctor) {
                 res.status(404).json({ message: 'doctor' })
-                return
-            }
-
-            if (!patient) {
-                res.status(404).json({ message: 'patient' })
                 return
             }
 
@@ -75,7 +69,7 @@ export default class PrescriptionController {
         try {
             const { prescriptionId } = req.params
             const { userId } = req.body
-            const patientId = await PatientProfileModules.findPatientById(userId)
+            const patientId = await UserModules.findUserByNid(userId)
             const prescription = await prescriptionModule.findPrescription(prescriptionId, ['patient'])
 
             if (patientId === null) {

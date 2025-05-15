@@ -1,7 +1,7 @@
-import { User } from "../../entities/user"
+import { User } from "../entities/user"
 import bcrypt from 'bcrypt'
 import createHttpError from 'http-errors'
-import { AppDataSource } from "../../../ormconfig"
+import { AppDataSource } from "../../ormconfig"
 
 export default class UserModules {
 
@@ -12,7 +12,8 @@ export default class UserModules {
         NID: string,
         password: string,
         role: "doctor" | "patient" | "owner",
-        birth_date: string) {
+        birth_date?: string,
+        blood_type?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | "Unknown") {
 
         try {
             const hashedPw = await bcrypt.hash(password, 12)
@@ -23,8 +24,8 @@ export default class UserModules {
             newUser.last_name = lName
             newUser.role = role
             newUser.password = hashedPw
-            newUser.birth_date = new Date(birth_date)
-
+            newUser.birth_date = new Date(birth_date) ?? new Date()
+            newUser.blood_type = blood_type
 
             return newUser
         } catch (err) {

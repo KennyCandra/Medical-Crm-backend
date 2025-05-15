@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express"
-import { SpecializationModules } from '../modules/SpecializationModules/SpecializationModules'
+import { SpecializationModules } from '../modules/SpecializationModules'
 
 class specialization {
 

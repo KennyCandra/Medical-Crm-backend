@@ -1,15 +1,15 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { PatientProfile } from "./patientProfile";
 import { Allergy } from "./Allergy";
+import { User } from "./user";
 
 @Entity()
 export class Pallergy {
     @PrimaryGeneratedColumn('uuid')
     id: string
 
-    @ManyToOne(() => PatientProfile, patient => patient.patientAllergies)
+    @ManyToOne(() => User, patient => patient.patientAllergies)
     @JoinColumn()
-    patient: PatientProfile;
+    patient: User;
 
     @ManyToOne(() => Allergy, allergy => allergy.patientAllergies)
     @JoinColumn()

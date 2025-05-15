@@ -1,6 +1,6 @@
 import createhttperror from 'http-errors'
-import { AppDataSource } from "../../../ormconfig"
-import { Drug } from "../../entities/drug"
+import { AppDataSource } from "../../ormconfig"
+import { Drug } from "../entities/drug"
 
 class DrugsModule {
     static async findDrug({ drugId }: { drugId: string }) {

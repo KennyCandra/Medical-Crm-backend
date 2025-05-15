@@ -1,16 +1,16 @@
 import { NextFunction, Request, Response } from "express";
-import PatientProfileModules from "../modules/patientModules/PatientModules";
 import createhttperror from "http-errors";
 import { AppDataSource } from "../../ormconfig";
 import { Pallergy } from "../entities/Pallergy";
-import AllergyModule from "../modules/AllergiesModule/AllergyModule";
-import PallergyModule from "../modules/PallergyModule/PallergyModule";
+import AllergyModule from "../modules/AllergyModule";
+import PallergyModule from "../modules/PallergyModule";
+import UserModules from "../modules/UserModules";
 
 export default class AllergiesController {
     static async getAllergiesForPatient(req: Request, res: Response, next: NextFunction) {
         try {
             const { nid } = req.params;
-            const patient = await PatientProfileModules.findPatientbyNid(nid);
+            const patient = await UserModules.findUserByNid(nid);
             if (!patient) {
                 throw createhttperror(404, "Patient not found");
             }
@@ -27,7 +27,7 @@ export default class AllergiesController {
     static async addAllergy(req: Request, res: Response, next: NextFunction) {
         try {
             const { userId, allergyId } = req.body;
-            const patient = await PatientProfileModules.findPatientById(userId);
+            const patient = await UserModules.findUserByNid(userId);
             if (!patient) {
                 throw createhttperror(404, "Patient not found");
             }

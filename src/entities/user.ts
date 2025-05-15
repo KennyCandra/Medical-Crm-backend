@@ -2,10 +2,14 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     Column,
-    OneToOne
+    OneToOne,
+    OneToMany
 } from "typeorm";
-import { PatientProfile } from "./patientProfile";
 import { DoctorProfile } from "./doctorProfile";
+import { Prescription } from "./prescription";
+import { Diagnosis } from "./diagnosis";
+import { Pallergy } from "./Pallergy";
+import { ReportsEntity } from "./ReportsEntity";
 
 @Entity()
 export class User {
@@ -36,9 +40,24 @@ export class User {
     @OneToOne(() => DoctorProfile, (profile) => profile.user, { nullable: true })
     doctorProfile?: DoctorProfile
 
-    @OneToOne(() => PatientProfile, (profile) => profile.user, { nullable: true })
-    patientProfile?: PatientProfile
-    
+    @Column({
+        nullable: false,
+        type: 'enum',
+        enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'],
+        default: 'Unknown'
+    })
+    blood_type: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'Unknown'
 
+    @OneToMany(() => Prescription, prescription => prescription.patient)
+    prescriptions: Prescription[]
+
+    @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.patient)
+    patientDiagnoses: Diagnosis[]
+
+    @OneToMany(() => ReportsEntity, (reports) => reports.patient)
+    reports: ReportsEntity[]
+
+    @OneToMany(() => Pallergy, (Pallergy) => Pallergy.patient)
+    patientAllergies: Pallergy[]
 }
 

@@ -1,12 +1,12 @@
-import { Prescription } from "../../entities/prescription"
-import { PatientProfile } from "../../entities/patientProfile"
-import { DoctorProfile } from "../../entities/doctorProfile"
+import { Prescription } from "../entities/prescription"
+import { User } from "../entities/user"
+import { DoctorProfile } from "../entities/doctorProfile"
 import createhttperror from 'http-errors'
-import { PrescribedDrug } from "../../entities/prescribedDrug"
-import { AppDataSource } from "../../../ormconfig"
+import { PrescribedDrug } from "../entities/prescribedDrug"
+import { AppDataSource } from "../../ormconfig"
 
 class prescriptionModule {
-    static async createPrescription({ patient, doctor, prescribedDrug, description }: { description: string, patient: PatientProfile, doctor: DoctorProfile, prescribedDrug: PrescribedDrug[] }) {
+    static async createPrescription({ patient, doctor, prescribedDrug, description }: { description: string, patient: User, doctor: DoctorProfile, prescribedDrug: PrescribedDrug[] }) {
         try {
             const newPrescrition = new Prescription()
             newPrescrition.doctor = doctor;
