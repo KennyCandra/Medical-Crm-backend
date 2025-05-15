@@ -1,7 +1,7 @@
-import { AppDataSource } from "../../../ormconfig"
-import { Allergy } from "../../entities/Allergy"
-import { Pallergy } from "../../entities/Pallergy"
-import { PatientProfile } from "../../entities/patientProfile"
+import { AppDataSource } from "../../ormconfig"
+import { Allergy } from "../entities/Allergy"
+import { Pallergy } from "../entities/Pallergy"
+import { User } from "../entities/user"
 import createhttperror from 'http-errors'
 
 interface PallergyCreation {
@@ -9,7 +9,7 @@ interface PallergyCreation {
 }
 
 export default class PallergyModule {
-    static async PallergyCreation(patient: PatientProfile,
+    static async PallergyCreation(patient: User,
         allergy: Allergy) {
         try {
             const newPallergy = new Pallergy()

@@ -1,5 +1,5 @@
-import { AppDataSource } from "../../../ormconfig"
-import { Classification } from "../../entities/Classification"
+import { AppDataSource } from "../../ormconfig"
+import { Classification } from "../entities/Classification"
 
 export default class ClassificationModule {
     static async findClass(id: string) {

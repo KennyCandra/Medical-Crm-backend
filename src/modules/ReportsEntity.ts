@@ -1,12 +1,12 @@
-import { AppDataSource } from "../../../ormconfig"
-import { DoctorProfile } from "../../entities/doctorProfile"
-import { PatientProfile } from "../../entities/patientProfile"
-import { PrescribedDrug } from "../../entities/prescribedDrug"
-import { ReportsEntity } from "../../entities/ReportsEntity"
+import { AppDataSource } from "../../ormconfig"
+import { DoctorProfile } from "../entities/doctorProfile"
+import { User } from "../entities/user"
+import { PrescribedDrug } from "../entities/prescribedDrug"
+import { ReportsEntity } from "../entities/ReportsEntity"
 
 
 export default class ReportsEntityModule {
-    static async createReportEntity(doctor: DoctorProfile, patient: PatientProfile, description: string, prescribedDrug: PrescribedDrug): Promise<ReportsEntity> {
+    static async createReportEntity(doctor: DoctorProfile, patient: User, description: string, prescribedDrug: PrescribedDrug): Promise<ReportsEntity> {
         try {
             const newReport = new ReportsEntity()
             newReport.doctor = doctor;
@@ -27,7 +27,7 @@ export default class ReportsEntityModule {
             .createQueryBuilder('r')
             .leftJoinAndSelect('r.patient', 'p')
             .leftJoinAndSelect('r.doctor', 'd')
-            .leftJoinAndSelect('p.user' , 'u')
+            .leftJoinAndSelect('p.user', 'u')
             .leftJoinAndSelect('d.user', 'ud')
             .getMany()
 
@@ -40,7 +40,7 @@ export default class ReportsEntityModule {
                 .getRepository(ReportsEntity)
                 .createQueryBuilder('r')
                 .leftJoinAndSelect('r.patient', 'p')
-                .leftJoinAndSelect('p.user' , 'u')
+                .leftJoinAndSelect('p.user', 'u')
                 .leftJoinAndSelect('r.prescribedDrug', 'pd')
                 .leftJoinAndSelect('r.doctor', 'd')
                 .leftJoinAndSelect('d.user', 'ud')

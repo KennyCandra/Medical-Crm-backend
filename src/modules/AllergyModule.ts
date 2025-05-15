@@ -1,5 +1,5 @@
-import { AppDataSource } from "../../../ormconfig"
-import { Allergy } from "../../entities/Allergy"
+import { AppDataSource } from "../../ormconfig"
+import { Allergy } from "../entities/Allergy"
 import createHttpError from "http-errors"
 
 export default class AllergyModule {

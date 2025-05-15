@@ -1,8 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from "typeorm";
-import { PatientProfile } from "./patientProfile";
 import { PrescribedDrug } from "./prescribedDrug";
 import { DoctorProfile } from "./doctorProfile";
-
+import { User } from "./user";
 @Entity()
 export class Prescription {
     @PrimaryGeneratedColumn('uuid')
@@ -17,8 +16,8 @@ export class Prescription {
     @Column({ nullable: true })
     description: string
 
-    @ManyToOne(() => PatientProfile, (patientProfile) => patientProfile.prescriptions)
-    patient: PatientProfile;
+    @ManyToOne(() => User, (user) => user.prescriptions)
+    patient: User;
 
     @ManyToOne(() => DoctorProfile, (profile) => profile.prescriptions)
     doctor: DoctorProfile;

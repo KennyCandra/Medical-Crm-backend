@@ -1,6 +1,6 @@
-import { AppDataSource } from "../../../ormconfig"
-import { DoctorProfile } from "../../entities/doctorProfile"
-import { Specialization } from "../../entities/specialization"
+import { AppDataSource } from "../../ormconfig"
+import { DoctorProfile } from "../entities/doctorProfile"
+import { Specialization } from "../entities/specialization"
 import createHttpError from 'http-errors'
 
 export class SpecializationModules {
@@ -18,6 +18,7 @@ export class SpecializationModules {
     static async allSpecialization() {
         try {
             const specializations = await AppDataSource.getRepository(Specialization).find()
+            console.log(specializations)
             return specializations
         } catch (err) {
             throw createHttpError.InternalServerError['internal server error']
@@ -36,5 +37,4 @@ export class SpecializationModules {
             throw createHttpError.InternalServerError['internal server error']
         }
     }
-
 }

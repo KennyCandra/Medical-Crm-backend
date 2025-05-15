@@ -1,5 +1,5 @@
-import { AppDataSource } from "../../../ormconfig"
-import { Category } from "../../entities/Category"
+import { AppDataSource } from "../../ormconfig"
+import { Category } from "../entities/Category"
 
 export default class CategoryModule {
     static async findCat(id: string) {

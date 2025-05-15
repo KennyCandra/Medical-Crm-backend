@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express"
-import DrugsModule from "../modules/DrugsModule/DrugsModule";
+import DrugsModule from "../modules/DrugsModule";
 import displayTextAfterNumbers from "../helpers/displayTextAfterNumbers";
 import { ai } from "../../app";
-import PatientProfileModules from "../modules/patientModules/PatientModules";
-import prescriptionModule from "../modules/Prescription/PrescriptionModule";
-import PallergyModule from "../modules/PallergyModule/PallergyModule";
+import prescriptionModule from "../modules/PrescriptionModule";
+import PallergyModule from "../modules/PallergyModule";
 import extractJsonFromString from "../helpers/JsonCut";
+import UserModules from "../modules/UserModules";
 
 class DrugController {
     static async fetchAllDrugs(req: Request, res: Response, next: NextFunction) {
@@ -52,7 +52,7 @@ class DrugController {
             const { nid } = req.params;
             const { newDrugs } = req.query
             console.log(newDrugs)
-            const patient = await PatientProfileModules.findPatientbyNid(nid)
+            const patient = await UserModules.findUserByNid(nid)
             const drugs = await prescriptionModule.fetchDrugsFromPrescriptinsWithStatusTakingForSinglePatient(patient.id)
             let oldDrugs = drugs?.map(d => {
                 return d.name

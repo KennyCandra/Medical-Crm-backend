@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import DiseaseModule from "../modules/DiseaseModule/DiseaseModule";
+import DiseaseModule from "../modules/DiseaseModule";
 
 export default class DiseaseController {
     static async fetchDisease(req: Request, res: Response, next: NextFunction): Promise<void> {

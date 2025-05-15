@@ -3,17 +3,13 @@ import { AppDataSource } from "../../ormconfig";
 import { User } from "../entities/user";
 import createHttpError from "http-errors";
 import bcrypt from 'bcrypt'
-import UserModules from "../modules/UserModules/UserModules";
-import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
-import { SpecializationModules } from "../modules/SpecializationModules/SpecializationModules";
-import PatientProfileModules from "../modules/patientModules/PatientModules";
-import jwt from "jsonwebtoken";
+import UserModules from "../modules/UserModules";
+import DoctorProfileModules from "../modules/DoctorModules";
+import { SpecializationModules } from "../modules/SpecializationModules";
+import { sign } from "jsonwebtoken";
 import { verifyToken } from "../helpers/verifyToken";
-import prescriptionModule from "../modules/Prescription/PrescriptionModule";
-import PallergyModule from "../modules/PallergyModule/PallergyModule";
-import DiagnosisModule from "../modules/DiagnosisModule/DiagnosisModule";
 
-const sign = jwt.sign;
+
 class AuthController {
 
     static async SignUp(req: Request, res: Response, next: NextFunction) {
@@ -22,7 +18,7 @@ class AuthController {
         await queryRunner.startTransaction();
 
         try {
-            const { firstName, lastName, gender, NID, password, role, birth_date } = req.body;
+            const { firstName, lastName, gender, NID, password, role, birth_date, blood_type } = req.body;
 
             if (role === 'owner') {
                 throw createHttpError.BadRequest('Owner cannot be created');
@@ -38,9 +34,11 @@ class AuthController {
                 NID,
                 password,
                 role,
-                birth_date
+                birth_date,
+                blood_type
             )
             await queryRunner.manager.save(newUser)
+            console.log(newUser)
 
             if (newUser?.role === "doctor") {
                 const specializationEntity = SpecializationModules.isValid(req.body.speciality)
@@ -50,13 +48,10 @@ class AuthController {
                     specialization: (await specializationEntity).specializationId,
                 })
                 await queryRunner.manager.save(doctor)
-            } else if (newUser.role === 'patient') {
-                const patient = await PatientProfileModules.createPatient({
-                    user: newUser,
-                    blood_type: req.body.blood_type,
-                })
-                await queryRunner.manager.save(patient)
             }
+            
+            newUser.password = undefined
+
             await queryRunner.commitTransaction();
             res.status(201).json({ message: "created User", newUser });
         }
@@ -74,7 +69,6 @@ class AuthController {
             const user = await AppDataSource.getRepository(User)
                 .createQueryBuilder('user')
                 .leftJoinAndSelect('user.doctorProfile', 'doctorProfile')
-                .leftJoinAndSelect('user.patientProfile', 'patientProfile')
                 .where("user.NID = :NID", { NID: req.body.nid })
                 .getOne()
 
@@ -134,7 +128,6 @@ class AuthController {
                 .createQueryBuilder('user')
                 .where('user.NID LIKE :nid', { nid: `%${nid}%` })
                 .andWhere('user.role = :role', { role: 'patient' })
-                .leftJoinAndSelect('user.patientProfile', 'patientProfile')
                 .select([
                     'user.id AS id',
                     'user.NID as NID',
@@ -255,31 +248,30 @@ class AuthController {
         }
     }
 
-    static async fetchAllPatientData(req: Request, res: Response, next: NextFunction): Promise<void> {
-        try {
-            const { role } = req.body
-            if (role === 'patient') {
-                res.status(409).json({ message: "you don't have access to this data" })
-                return
-            }
-            const { nid } = req.params
-            const user = await UserModules.findUserByNid(nid)
-            const patient = await PatientProfileModules.findPatientbyNid(nid)
-            const prescriptions = await prescriptionModule.findManyPrescriptions(null, patient.id)
-            const allergies = await PallergyModule.findForPatient(patient.id)
-            const diagnosis = await DiagnosisModule.findForPatient(patient)
-            const diagnoses = diagnosis.map(diag => {
-                return diag.disease.name
-            })
-            user.password = undefined
-            res.status(200).json({ patient, prescriptions, allergies, diagnoses, user })
+    // static async fetchAllPatientData(req: Request, res: Response, next: NextFunction): Promise<void> {
+    //     try {
+    //         const { role } = req.body
+    //         if (role === 'patient') {
+    //             res.status(409).json({ message: "you don't have access to this data" })
+    //             return
+    //         }
+    //         const { nid } = req.params
+    //         const user = await UserModules.findUserByNid(nid)
+    //         const prescriptions = await prescriptionModule.findManyPrescriptions(null, user.id)
+    //         const allergies = await PallergyModule.findForPatient(user.id)
+    //         const diagnosis = await DiagnosisModule.findForPatient(user)
+    //         const diagnoses = diagnosis.map(diag => {
+    //             return diag.disease.name
+    //         })
+    //         user.password = undefined
+    //         res.status(200).json({ prescriptions, allergies, diagnoses, user })
 
-        }
-        catch (err) {
-            console.log(err)
-            next(err)
-        }
-    }
+    //     }
+    //     catch (err) {
+    //         console.log(err)
+    //         next(err)
+    //     }
+    // }
 
 }
 

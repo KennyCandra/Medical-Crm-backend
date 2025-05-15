@@ -1,16 +1,15 @@
 import { Request, Response, NextFunction } from "express";
-import PatientProfileModules from "../modules/patientModules/PatientModules";
-import DoctorProfileModules from "../modules/DoctorModules/DoctorModules";
-import DiagnosisModule from "../modules/DiagnosisModule/DiagnosisModule";
-import DiseaseModule from "../modules/DiseaseModule/DiseaseModule";
+import DoctorProfileModules from "../modules/DoctorModules";
+import DiagnosisModule from "../modules/DiagnosisModule";
+import DiseaseModule from "../modules/DiseaseModule";
 import { AppDataSource } from "../../ormconfig";
-
+import UserModules from "../modules/UserModules";
 export class DiagnosisController {
     static async createDiagonsis(req: Request, res: Response, next: NextFunction) {
         try {
             const { patientId, doctorId, diseaseId, severity } = req.body
             console.log(patientId, doctorId, diseaseId, severity)
-            const patient = await PatientProfileModules.findPatientbyNid(patientId)
+            const patient = await UserModules.findUserByNid(patientId)
             const doctor = await DoctorProfileModules.findDoctor(doctorId)
             const disease = await DiseaseModule.findDiseaseById(diseaseId)
             const diagnoses = await DiagnosisModule.diagnosesCreation(patient, doctor, disease, severity)
@@ -32,7 +31,7 @@ export class DiagnosisController {
                 return
             }
 
-            const patient = await PatientProfileModules.findPatientbyNid(nid)
+            const patient = await UserModules.findUserByNid(nid)
             const diagnosis = await DiagnosisModule.findForPatient(patient)
 
             res.status(200).json({ diagnosis, message: 'here is your diagnosis' })
