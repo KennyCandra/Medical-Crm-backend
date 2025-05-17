@@ -2,11 +2,9 @@ import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMan
 import { Prescription } from "./prescription";
 import { Drug } from "./drug";
 import { ReportsEntity } from "./ReportsEntity";
-
+import { DefaultDocument } from "./NormalDocument";
 @Entity()
-export class PrescribedDrug {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class PrescribedDrug extends DefaultDocument {
 
     @Column({ type: 'enum', enum: ["before", "after"], nullable: false, default: 'before' })
     time: "before" | "after"

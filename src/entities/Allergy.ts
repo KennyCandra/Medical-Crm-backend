@@ -1,10 +1,9 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 import { Pallergy } from "./Pallergy";
+import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
-export class Allergy {
-    @PrimaryGeneratedColumn('uuid')
-    id: string 
+export class Allergy extends DefaultDocument {
 
     @Column({ unique: true, nullable: false })
     name: string;

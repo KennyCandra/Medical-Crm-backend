@@ -4,14 +4,16 @@ import { User } from "./user";
 import { Diagnosis } from "./diagnosis";
 import { Prescription } from "./prescription";
 import { ReportsEntity } from "./ReportsEntity";
+import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
-export class DoctorProfile {
-    @PrimaryGeneratedColumn('uuid')
-    id: string
+export class DoctorProfile extends DefaultDocument {
 
     @Column({ unique: true, nullable: false })
     medical_license_number: string
+
+    @Column({ default: 'pending', type: 'enum', enum: ['pending', 'approved', 'rejected'] })
+    status: string
 
     @ManyToOne(() => Specialization, (specialization) => specialization.doctors)
     specialization: Specialization

@@ -2,10 +2,9 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from "ty
 import { PrescribedDrug } from "./prescribedDrug";
 import { DoctorProfile } from "./doctorProfile";
 import { User } from "./user";
+import { DefaultDocument } from "./NormalDocument";
 @Entity()
-export class Prescription {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class Prescription extends DefaultDocument {
 
     @Column({ nullable: true })
     start_date: Date;

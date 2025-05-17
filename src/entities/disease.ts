@@ -1,10 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { Diagnosis } from "./diagnosis";
+import { DefaultDocument } from "./NormalDocument";
+
 
 @Entity()
-export class Disease {
-    @PrimaryGeneratedColumn("uuid")
-    id: string
+export class Disease extends DefaultDocument {
 
     @Column()
     name: string

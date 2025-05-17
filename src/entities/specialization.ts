@@ -1,10 +1,9 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 import { DoctorProfile } from "./doctorProfile";
+import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
-export class Specialization {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class Specialization extends DefaultDocument {
 
     @Column({ unique: true })
     name: string;

@@ -1,11 +1,9 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 import { Classification } from "./Classification";
-import { v4 as uuidv4 } from "uuid";
+import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
-export class Category {
-    @PrimaryGeneratedColumn('uuid')
-    id: string = uuidv4();
+export class Category extends DefaultDocument {
 
     @Column({ unique: true, nullable: false })
     name: string;

@@ -2,11 +2,10 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColum
 import { PrescribedDrug } from "./prescribedDrug";
 import { Classification } from "./Classification";
 import { Route } from "./Rotue";
+import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
-export class Drug {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class Drug extends DefaultDocument {
 
     @Column({ nullable: false })
     name: string;

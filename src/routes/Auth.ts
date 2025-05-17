@@ -1,13 +1,13 @@
 import express from "express";
 import AuthController from "../controllers/Auth";
 import Auth from "../middleware/middleware";
-import { RegisterPatientSchema } from "../Schemas/RegisterSchema";
+import { RegisterPatientSchema, LoginSchema } from "../Schemas/RegisterSchema";
 import validate from "../Schemas/SchemaValidation";
 const router = express.Router()
 
 router.post('/sign-up', validate(RegisterPatientSchema), AuthController.SignUp)
 
-router.post('/login', AuthController.login)
+router.post('/login', validate(LoginSchema), AuthController.login)
 
 router.get('/userId', Auth.checkToken, AuthController.fetchUserId)
 

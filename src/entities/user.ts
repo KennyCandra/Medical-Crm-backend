@@ -3,7 +3,9 @@ import {
     PrimaryGeneratedColumn,
     Column,
     OneToOne,
-    OneToMany
+    OneToMany,
+    UpdateDateColumn,
+    CreateDateColumn
 } from "typeorm";
 import { DoctorProfile } from "./doctorProfile";
 import { Prescription } from "./prescription";
@@ -32,7 +34,7 @@ export class User {
     password: string
 
     @Column({ type: 'enum', enum: ['doctor', 'patient', 'owner'], nullable: false })
-    role: 'doctor' | 'patient' | 'owner'
+    role: 'doctor' | 'patient' | 'admin'
 
     @Column({ nullable: false, type: 'date' })
     birth_date: Date
@@ -43,10 +45,10 @@ export class User {
     @Column({
         nullable: false,
         type: 'enum',
-        enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'],
-        default: 'Unknown'
+        enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown'],
+        default: 'unknown'
     })
-    blood_type: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'Unknown'
+    blood_type: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown'
 
     @OneToMany(() => Prescription, prescription => prescription.patient)
     prescriptions: Prescription[]
@@ -59,5 +61,11 @@ export class User {
 
     @OneToMany(() => Pallergy, (Pallergy) => Pallergy.patient)
     patientAllergies: Pallergy[]
+
+    @CreateDateColumn()
+    created_at: Date
+
+    @UpdateDateColumn()
+    updated_at: Date
 }
 

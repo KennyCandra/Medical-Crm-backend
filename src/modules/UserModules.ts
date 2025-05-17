@@ -11,9 +11,8 @@ export default class UserModules {
         gender: "male" | "female",
         NID: string,
         password: string,
-        role: "doctor" | "patient" | "owner",
         birth_date?: string,
-        blood_type?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | "Unknown") {
+        blood_type?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | "unknown") {
 
         try {
             const hashedPw = await bcrypt.hash(password, 12)
@@ -22,7 +21,7 @@ export default class UserModules {
             newUser.first_name = fName
             newUser.gender = gender
             newUser.last_name = lName
-            newUser.role = role
+            newUser.role = 'patient'
             newUser.password = hashedPw
             newUser.birth_date = new Date(birth_date) ?? new Date()
             newUser.blood_type = blood_type
