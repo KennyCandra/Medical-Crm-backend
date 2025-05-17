@@ -2,10 +2,9 @@ import { Column, Entity, JoinColumn, ManyToOne,PrimaryGeneratedColumn } from "ty
 import { DoctorProfile } from "./doctorProfile";
 import { PrescribedDrug } from "./prescribedDrug";
 import { User } from "./user";
+import { DefaultDocument } from "./NormalDocument";
 @Entity()
-export class ReportsEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class ReportsEntity extends DefaultDocument {
 
     @Column({ nullable: false })
     description: string;

@@ -1,11 +1,10 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Drug } from "./drug";
 import { Category } from "./Category";
+import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
-export class Classification {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class Classification extends DefaultDocument {
 
     @Column({ nullable: false })
     name: string;

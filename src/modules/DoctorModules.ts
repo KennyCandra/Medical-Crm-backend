@@ -13,6 +13,7 @@ export default class DoctorProfileModules {
             newDoctor.user = user;
             newDoctor.specialization = specialization
             newDoctor.medical_license_number = license;
+            newDoctor.status = 'pending'
             return newDoctor
         } catch (err) {
             if (err.code === '23505') {

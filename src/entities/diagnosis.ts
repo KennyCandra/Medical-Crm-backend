@@ -2,12 +2,12 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 import { Disease } from "./disease";
 import { DoctorProfile } from "./doctorProfile";
 import { User } from "./user";
+import { DefaultDocument } from "./NormalDocument";
+
 
 @Entity()
 
-export class Diagnosis {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class Diagnosis extends DefaultDocument {
 
     @Column({ type: 'enum', enum: ["acute", "severe", "mild", "chronic"] })
     severity: "acute" | "severe" | "mild" | "chronic"

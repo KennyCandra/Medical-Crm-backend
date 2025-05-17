@@ -8,6 +8,7 @@ import DoctorProfileModules from "../modules/DoctorModules";
 import { SpecializationModules } from "../modules/SpecializationModules";
 import { sign } from "jsonwebtoken";
 import { verifyToken } from "../helpers/verifyToken";
+import { StatusCodes, ReasonPhrases } from "http-status-codes";
 
 
 class AuthController {
@@ -20,8 +21,8 @@ class AuthController {
         try {
             const { firstName, lastName, gender, NID, password, role, birth_date, blood_type } = req.body;
 
-            if (role === 'owner') {
-                throw createHttpError.BadRequest('Owner cannot be created');
+            if (role === 'admin') {
+                throw createHttpError.BadRequest('Admin cannot be created');
             }
 
             if (!NID.startsWith('2') && !NID.startsWith('3')) {
@@ -33,7 +34,6 @@ class AuthController {
                 gender,
                 NID,
                 password,
-                role,
                 birth_date,
                 blood_type
             )
@@ -49,11 +49,11 @@ class AuthController {
                 })
                 await queryRunner.manager.save(doctor)
             }
-            
+
             newUser.password = undefined
 
             await queryRunner.commitTransaction();
-            res.status(201).json({ message: "created User", newUser });
+            res.status(StatusCodes.CREATED).json({ message: ReasonPhrases.CREATED, newUser });
         }
         catch (err: any) {
             console.log(err)
@@ -103,7 +103,7 @@ class AuthController {
             })
             user.password = undefined
 
-            res.status(200).json({ message: 'Login successful', accessToken, user });
+            res.status(StatusCodes.OK).json({ message: 'Login successful', accessToken, user });
         } catch (err) {
             next(err)
         }
