@@ -221,10 +221,13 @@ class AuthController {
 
     static async logOut(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            res.clearCookie('refreshToken', {
+            console.log('cookies', req.cookies)
+            res.clearCookie('refresh-token', {
                 secure: true,
-                sameSite: 'lax',
-                httpOnly: true
+                sameSite: 'none',
+                httpOnly: true,
+                path: '/',
+                maxAge: 0
             })
 
             res.status(200).json({ message: 'logged out' })
