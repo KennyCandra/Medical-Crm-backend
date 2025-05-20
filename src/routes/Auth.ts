@@ -1,13 +1,17 @@
 import express from "express";
 import AuthController from "../controllers/Auth";
 import Auth from "../middleware/middleware";
-import { RegisterPatientSchema, LoginSchema } from "../Schemas/RegisterSchema";
+import { RegisterPatientSchema, LoginSchema , resetTokenSchema } from "../Schemas/RegisterSchema";
 import validate from "../Schemas/SchemaValidation";
 const router = express.Router()
 
 router.post('/sign-up', validate(RegisterPatientSchema), AuthController.SignUp)
 
 router.post('/login', validate(LoginSchema), AuthController.login)
+
+router.post('/forget-password', AuthController.forgetPassword)
+
+router.put('/reset-password',  validate(resetTokenSchema) ,AuthController.resetPassword)
 
 router.get('/userId', Auth.checkToken, AuthController.fetchUserId)
 

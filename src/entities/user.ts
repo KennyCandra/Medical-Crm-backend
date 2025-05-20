@@ -12,6 +12,7 @@ import { Prescription } from "./prescription";
 import { Diagnosis } from "./diagnosis";
 import { Pallergy } from "./Pallergy";
 import { ReportsEntity } from "./ReportsEntity";
+import { PasswordResetToken } from "./resetPw";
 
 @Entity()
 export class User {
@@ -61,6 +62,12 @@ export class User {
 
     @OneToMany(() => Pallergy, (Pallergy) => Pallergy.patient)
     patientAllergies: Pallergy[]
+
+    @Column({ nullable: false, unique: true })
+    email: string
+
+    @OneToMany(() => PasswordResetToken, (token) => token.user)
+    passwordResetTokens: PasswordResetToken[]
 
     @CreateDateColumn()
     created_at: Date
