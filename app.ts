@@ -16,6 +16,7 @@ import { GoogleGenAI } from '@google/genai'
 import DiseaseRoutes from './src/routes/Disease'
 import AllergyRoutes from './src/routes/Allergies'
 import ReportRouter from './src/routes/ReportsController'
+import { ReasonPhrases, StatusCodes } from 'http-status-codes'
 
 const app = express()
 app.use(express.json())
@@ -49,8 +50,8 @@ app.use(
         , res: Response
         , next: NextFunction
     ) => {
-        let status: number = 500;
-        let message: string = "Internal Server Error";
+        let status: number = StatusCodes.INTERNAL_SERVER_ERROR;
+        let message: string = ReasonPhrases.INTERNAL_SERVER_ERROR;
 
         if (createHttpError.isHttpError(err)) {
             status = err.statusCode;

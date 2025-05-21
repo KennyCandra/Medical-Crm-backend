@@ -10,9 +10,11 @@ const validate = (schema: z.ZodSchema<any, any>) => {
             next()
         } catch (error) {
             if (error instanceof ZodError) {
-                const errorMessage = error.errors.map(err => err.message).join(', ')
-                const errorField = error.errors.map(err => err.path).join(', ')
-                res.status(StatusCodes.BAD_REQUEST).json({ message: ReasonPhrases.BAD_REQUEST, error: errorMessage, errorField })
+                const errors = error.errors.map(err => ({
+                    field: err.path.join('.'),
+                    message: err.message
+                }))
+                res.status(StatusCodes.BAD_REQUEST).json({ message: ReasonPhrases.BAD_REQUEST, error: errors })
                 return
             }
             else {

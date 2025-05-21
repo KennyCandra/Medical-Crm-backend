@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import DiseaseModule from "../modules/DiseaseModule";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 export default class DiseaseController {
     static async fetchDisease(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const diseases = await DiseaseModule.fetchAllDiseases()
-            res.status(200).json({ message: 'here is your diseases', diseases })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, diseases })
         } catch (err) {
             next(err)
         }
@@ -15,7 +16,7 @@ export default class DiseaseController {
         try {
             const { value } = req.params
             const diseases = await DiseaseModule.fetchSpecificDiseases(value)
-            res.status(200).json({ message: 'here is your diseases', diseases })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, diseases })
         } catch (err) {
             next(err)
         }

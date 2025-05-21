@@ -26,7 +26,13 @@ class AuthController {
             const { firstName, lastName, gender, NID, password, role, birth_date, blood_type, email } = req.body;
 
             if (!NID.startsWith('2') && !NID.startsWith('3')) {
-                throw new createHttpError.BadRequest('NID must start with 2 or 3');
+                res.status(StatusCodes.BAD_REQUEST).json({
+                    error: [{
+                        field: "nid",
+                        message: "please enter a valid NID"
+                    }]
+                })
+                return
             };
 
             const newUser = await UserModules.createUser(
@@ -43,25 +49,26 @@ class AuthController {
             await queryRunner.manager.save(newUser)
 
             if (role === "doctor") {
-                const specializationEntity = SpecializationModules.isValid(req.body.speciality)
+                const specializationEntity = await SpecializationModules.isValid(req.body.speciality)
                 const doctor = await DoctorProfileModules.createDoctor({
                     user: newUser,
                     license: req.body.license,
-                    specialization: (await specializationEntity).specializationId,
+                    specialization: specializationEntity.specializationId,
                 })
 
                 await queryRunner.manager.save(doctor)
             }
 
+
+            const userId = newUser.id
+            const userRole = newUser.role
+            const accessToken = createToken({ userId, role: userRole }, '15m')
+            const refreshToken = createToken({ userId }, '60d')
+
             newUser.password = undefined
             newUser.created_at = undefined
             newUser.updated_at = undefined
             newUser.id = undefined
-
-            const accessToken = createToken({ userId: newUser.id, role: newUser.role }, '15m')
-
-            const refreshToken = createToken({ userId: newUser.id }, '60d')
-
 
             res.cookie('refreshToken', refreshToken, {
                 secure: true,
@@ -72,28 +79,56 @@ class AuthController {
             })
 
             await queryRunner.commitTransaction();
-            const emailContent = `
-            <h1>Welcome to our platform!</h1>
-            <p>Thank you for signing up with us!</p>
-            <p>Your account has been created successfully.</p>
-            <p>Please use the following credentials to login:</p>
-            <p>Email: ${email}</p>
-            <p>Your National ID: ${NID}</p>
-            `
-            const msg = {
-                to: email,
-                from: process.env.SENDGRID_FROM_EMAIL as string,
-                subject: 'Welcome to our platform!',
-                html: emailContent
+
+            try {
+                const emailContent = `
+                <h1>Welcome to our platform!</h1>
+                <p>Thank you for signing up with us!</p>
+                <p>Your account has been created successfully.</p>
+                <p>Please use the following credentials to login:</p>
+                <p>Email: ${email}</p>
+                <p>Your National ID: ${NID}</p>
+                `
+                const msg = {
+                    to: email,
+                    from: process.env.SENDGRID_FROM_EMAIL as string,
+                    subject: 'Welcome to our platform!',
+                    html: emailContent
+                }
+
+                await sgMail.send(msg)
+            } catch (emailError) {
+                console.error('Failed to send welcome email:', emailError);
             }
 
-            await sgMail.send(msg)
             res.status(StatusCodes.CREATED).json({ message: ReasonPhrases.CREATED, newUser, accessToken });
         }
         catch (err: any) {
-            console.log(err)
             await queryRunner.rollbackTransaction();
-            next(err)
+
+            if (err.detail && typeof err.detail === 'string') {
+                const error: { field: string, message: string }[] = []
+                if (err.detail.includes('email')) {
+                    error.push({
+                        field: "email",
+                        message: "email already exists"
+                    })
+                }
+                if (err.detail.includes('NID')) {
+                    error.push({
+                        field: "nid",
+                        message: "NID already exists"
+                    })
+                }
+                res.status(StatusCodes.CONFLICT).json({
+                    message: ReasonPhrases.CONFLICT,
+                    error: error
+                })
+                return
+            }
+
+            console.error('Signup error:', err);
+            next(err);
         } finally {
             await queryRunner.release();
         }
@@ -101,19 +136,30 @@ class AuthController {
 
     static async login(req: Request, res: Response, next: NextFunction) {
         try {
-            const user = await AppDataSource.getRepository(User)
-                .createQueryBuilder('user')
-                .leftJoinAndSelect('user.doctorProfile', 'doctorProfile')
-                .where("user.NID = :NID", { NID: req.body.nid })
-                .getOne()
+            const { nid, password } = req.body
+            const user = await UserModules.findUserByNid(nid)
 
             if (!user) {
-                throw new createHttpError.NotFound('User not found');
+                res.status(StatusCodes.NOT_FOUND).json({
+                    message: ReasonPhrases.NOT_FOUND,
+                    error: [{
+                        field: "nid",
+                        message: "user not found"
+                    }]
+                })
+                return
             }
 
-            const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
+            const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
-                throw new createHttpError.Unauthorized('Invalid password');
+                res.status(StatusCodes.BAD_REQUEST).json({
+                    message: ReasonPhrases.BAD_REQUEST,
+                    error: [{
+                        field: "password",
+                        message: "Invalid password"
+                    }]
+                })
+                return
             }
 
             const accessToken = createToken({ userId: user.id, role: user.role }, '15m')
@@ -130,7 +176,7 @@ class AuthController {
             })
             user.password = undefined
 
-            res.status(StatusCodes.OK).json({ message: 'Login successful', accessToken, user });
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, accessToken, user });
         } catch (err) {
             next(err)
         }
@@ -139,15 +185,13 @@ class AuthController {
     static async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const refreshToken = req.cookies['refreshToken']
-            console.log('cookies', req.cookies)
             const token = await verifyToken(refreshToken)
-            console.log(token)
             if (token.expired) {
-                res.status(401).json({ message: 'please login again' })
+                res.status(StatusCodes.UNAUTHORIZED).json({ message: 'please login again' })
                 return
             }
 
-            const user = await AppDataSource.getRepository(User).findOneBy({ id: token.decodedToken.userId })
+            const user = await UserModules.findUserById(token.decodedToken.userId)
 
             const accessToken = createToken(
                 { userId: user.id, name: user.first_name + " " + user.last_name, role: user.role },
@@ -166,8 +210,12 @@ class AuthController {
             })
 
             user.password = undefined
+            user.created_at = undefined
+            user.updated_at = undefined
+            user.id = undefined
 
-            res.status(200).json({ accessToken, user })
+
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, accessToken, user })
         }
         catch (err) {
             console.log(err)
@@ -178,11 +226,17 @@ class AuthController {
     static async forgetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { email } = req.body;
-            console.log(email)
             const user = await UserModules.findUserByEmail(email)
 
             if (!user) {
-                throw new createHttpError.NotFound('User not found')
+                res.status(StatusCodes.NOT_FOUND).json({
+                    message: ReasonPhrases.NOT_FOUND,
+                    error: [{
+                        field: "email",
+                        message: "user not found"
+                    }]
+                })
+                return
             }
             const token = await PasswordResetTokenModules.createToken(user)
             await AppDataSource.manager.save(token)
@@ -195,10 +249,11 @@ class AuthController {
                 <h1>Reset Password</h1>
                 <p>Click the link below to reset your password</p>
                 <a href="${resetPasswordLink}">Reset Password</a>
+                <p>This link will expire in 1 day</p>
                 `
             }
             await sgMail.send(msg)
-            res.status(200).json({ message: 'Reset password link sent to email' })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK })
         } catch (err) {
             next(err)
         }
@@ -209,29 +264,23 @@ class AuthController {
             const { token, newPassword } = req.body
             const tokenEntity = await PasswordResetTokenModules.verifyToken(token)
             if (!tokenEntity) {
-                throw new createHttpError.BadRequest('invalid token')
+                throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
             }
-            if (tokenEntity.used) {
-                throw new createHttpError.BadRequest('token already used')
-            }
-            if (tokenEntity.expiresAt < new Date()) {
-                throw new createHttpError.BadRequest('token expired')
-            }
+
             const user = tokenEntity.user
             const hashedPw = await bcrypt.hash(newPassword, 10)
             user.password = hashedPw
             await AppDataSource.manager.save(user)
-            tokenEntity.used = true
-            await AppDataSource.manager.save(tokenEntity)
-            res.status(200).json({ message: 'password reset successfully' })
+            await AppDataSource.manager.remove(tokenEntity)
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK })
         }
         catch (err) {
             next(err)
         }
     }
+
     static async logOut(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            console.log('cookies', req.cookies)
             res.clearCookie('refreshToken', {
                 secure: true,
                 sameSite: 'none',
@@ -240,19 +289,7 @@ class AuthController {
                 maxAge: 0
             })
 
-            res.status(200).json({ message: 'logged out' })
-        }
-        catch (err) {
-            console.log(err)
-            next(err)
-        }
-    }
-
-    static async fetchUser(req: Request, res: Response, next: NextFunction) {
-        try {
-            const user = await AppDataSource.getRepository(User).createQueryBuilder('user').where('user.id = :id', { id: req.body.userId }).getOne()
-
-            res.status(200).json({ message: 'fetched user', user })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK })
         }
         catch (err) {
             console.log(err)
@@ -262,19 +299,19 @@ class AuthController {
 
     static async searchPatient(req: Request, res: Response, next: NextFunction) {
         try {
-            const nid = req.params.nid;
-            const users = await AppDataSource.getRepository(User)
-                .createQueryBuilder('user')
-                .where('user.NID LIKE :nid', { nid: `%${nid}%` })
-                .andWhere('user.role = :role', { role: 'patient' })
-                .select([
-                    'user.id AS id',
-                    'user.NID as NID',
-                    "CONCAT(user.first_name, ' ', user.last_name) AS fullName"
-                ])
-                .getRawMany()
+            const { nid } = req.params;
+            const users = await UserModules.searchUsersByNid(nid)
 
-            res.status(200).json({ users });
+            const postedUsers = users.map(user => (
+                {
+                    id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    nid: user.NID,
+                }
+            ))
+
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, users: postedUsers });
         }
         catch (err) {
             console.log(err)
@@ -282,45 +319,12 @@ class AuthController {
         }
     }
 
-    static async fetchUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
+    //why?
+    static async fetchUser(req: Request, res: Response, next: NextFunction) {
         try {
-            const { role, userId } = req.body;
+            const user = await AppDataSource.getRepository(User).createQueryBuilder('user').where('user.id = :id', { id: req.body.userId }).getOne()
 
-            const query = AppDataSource.getRepository(User)
-                .createQueryBuilder('user');
-
-            if (role === 'doctor') {
-                query.leftJoin('user.doctorProfile', 'doctorProfile')
-                    .select('doctorProfile.id', 'profileId');
-            } else {
-                query.leftJoin('user.patientProfile', 'patientProfile')
-                    .select('patientProfile.id', 'profileId');
-            }
-
-            query.where('user.id = :id', { id: userId });
-
-            const result = await query.getRawOne();
-
-            if (!result) {
-                res.status(404).json({ message: 'User not found' });
-                return;
-            }
-
-            res.status(200).json({ profileId: result.profileId, role });
-
-        }
-        catch (err) {
-            next(err)
-        }
-    }
-
-
-    static async fetchDoctorData(req: Request, res: Response, next: NextFunction): Promise<void> {
-        try {
-            const { userId } = req.body
-            const doctor = await DoctorProfileModules.findDoctorByid(userId)
-            const speciality = await SpecializationModules.doctorSpecialization(doctor.id)
-            res.status(200).json({ doctor, speciality })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, user })
         }
         catch (err) {
             console.log(err)

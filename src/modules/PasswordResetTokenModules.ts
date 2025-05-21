@@ -3,6 +3,8 @@ import { PasswordResetToken } from "../entities/resetPw";
 import { User } from "../entities/user";
 import crypto from 'crypto'
 import createHttpError from 'http-errors'
+import { StatusCodes, ReasonPhrases } from "http-status-codes";
+
 
 export default class PasswordResetTokenModules {
     static async createToken(user: User) {
@@ -15,7 +17,7 @@ export default class PasswordResetTokenModules {
             return token
         } catch (err) {
             console.log(err)
-            throw createHttpError(500, 'internal server error')
+            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
         }
     }
 
@@ -24,13 +26,15 @@ export default class PasswordResetTokenModules {
         try {
             const tokentEntity = await AppDataSource.getRepository(PasswordResetToken).createQueryBuilder('passwordResetToken')
                 .where('passwordResetToken.token = :token', { token })
+                .andWhere('passwordResetToken.expiresAt > :now', { now: new Date() })
+                .andWhere('passwordResetToken.used = false')
                 .leftJoinAndSelect('passwordResetToken.user', 'user')
                 .getOne()
             return tokentEntity
         }
         catch (err) {
             console.log(err)
-            throw createHttpError(500, 'internal server error')
+            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
         }
     }
 }

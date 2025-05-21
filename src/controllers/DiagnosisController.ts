@@ -4,6 +4,7 @@ import DiagnosisModule from "../modules/DiagnosisModule";
 import DiseaseModule from "../modules/DiseaseModule";
 import { AppDataSource } from "../../ormconfig";
 import UserModules from "../modules/UserModules";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 export class DiagnosisController {
     static async createDiagonsis(req: Request, res: Response, next: NextFunction) {
         try {
@@ -15,7 +16,7 @@ export class DiagnosisController {
             const diagnoses = await DiagnosisModule.diagnosesCreation(patient, doctor, disease, severity)
             await AppDataSource.manager.save(diagnoses)
 
-            res.status(201).json({ diagnoses, message: 'created Diagnosis' })
+            res.status(StatusCodes.CREATED).json({ diagnoses, message: ReasonPhrases.CREATED })
 
         } catch (err) {
             console.log(err)
@@ -34,7 +35,7 @@ export class DiagnosisController {
             const patient = await UserModules.findUserByNid(nid)
             const diagnosis = await DiagnosisModule.findForPatient(patient)
 
-            res.status(200).json({ diagnosis, message: 'here is your diagnosis' })
+            res.status(StatusCodes.OK).json({ diagnosis, message: ReasonPhrases.OK })
 
 
         } catch (err) {

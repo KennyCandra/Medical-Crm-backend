@@ -8,6 +8,8 @@ import ClassificationModule from "../modules/ClassificationModule";
 import createhttperror from 'http-errors'
 import { Disease } from "../entities/disease";
 import { Diagnosis } from "../entities/diagnosis";
+import { StatusCodes , ReasonPhrases } from "http-status-codes";
+
 
 export class AnalyticsController {
     static async basicAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -25,7 +27,7 @@ export class AnalyticsController {
                 .addGroupBy('cat.name')
                 .getRawMany();
 
-            res.status(200).json(drugAnalytics);
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, drugAnalytics });
         } catch (error) {
             console.log(error)
             next(error)
@@ -51,7 +53,7 @@ export class AnalyticsController {
                 .groupBy('c.id')
                 .getRawMany();
 
-            res.status(200).json({ drugAnalytics, category })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, drugAnalytics, category })
         } catch (err) {
             next(err)
         }
@@ -75,7 +77,7 @@ export class AnalyticsController {
                 .groupBy('d.name')
                 .addGroupBy('d.id')
                 .getRawMany();
-            res.status(200).json({ drugAnalytics, classification })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, drugAnalytics, classification })
 
         } catch (err) {
             console.log(err)
@@ -92,7 +94,7 @@ export class AnalyticsController {
                 .groupBy('d.id')
                 .addGroupBy('d.name')
                 .getRawMany();
-            res.status(200).json(disease);
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, disease });
         } catch (err) {
             console.log(err);
             next(err);
@@ -102,7 +104,7 @@ export class AnalyticsController {
     static async specificDiseaseAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { role } = req.body
-            if (role !== "owner") {
+            if (role !== "admin") {
                 res.status(409).json({ message: 'UnAuthorized' })
             }
             const { diseaseId } = req.params
@@ -138,11 +140,7 @@ export class AnalyticsController {
                 cumulativeCount: parseInt(row.cumulativeCount),
                 diseaseName: row.diseaseName
             }));
-
-            res.json(data).status(200)
-
-
-
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, data });
         }
         catch (err) {
             next(err)

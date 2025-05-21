@@ -4,6 +4,7 @@ import DoctorProfileModules from "../modules/DoctorModules";
 import createhttperror from "http-errors";
 import { AppDataSource } from "../../ormconfig";
 import UserModules from "../modules/UserModules";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 export default class ReportsController {
     static async createReport(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -14,13 +15,13 @@ export default class ReportsController {
                 UserModules.findUserByNid(nid)
             ])
             if (!doctor) {
-                throw new createhttperror.NotFound(!doctor ? 'Doctor not found' : 'Patient not found');
+                throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
             }
 
 
             const newReport = await ReportsEntityModule.createReportEntity(doctor, user, description, prescribedDrugId)
             await AppDataSource.manager.save(newReport)
-            res.status(201).json({ mesasge: 'created report', newReport })
+            res.status(StatusCodes.CREATED).json({ message: ReasonPhrases.CREATED, newReport })
         } catch (err) {
             console.error(err)
             next(err)
@@ -81,12 +82,14 @@ export default class ReportsController {
             report.reviewed = true
             await AppDataSource.manager.save(report)
 
-            res.status(200).json({ message: 'edited' })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, report })
 
         } catch (err) {
             console.error(err)
             next(err)
         }
     }
+
+
 
 }
