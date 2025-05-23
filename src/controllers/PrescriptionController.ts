@@ -9,6 +9,7 @@ import { Drug } from "../entities/drug";
 import createhttperror from 'http-errors'
 import { Prescription } from "../entities/prescription";
 import UserModules from "../modules/UserModules";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 export default class PrescriptionController {
 
     static async createPrescription(req: Request, res: Response, next: NextFunction) {
@@ -28,7 +29,7 @@ export default class PrescriptionController {
             const patient = await UserModules.findUserByNid(patientId)
 
             if (!doctor) {
-                res.status(404).json({ message: 'doctor' })
+                res.status(StatusCodes.NOT_FOUND).json({ message: ReasonPhrases.NOT_FOUND })
                 return
             }
 
@@ -52,7 +53,7 @@ export default class PrescriptionController {
             })
 
             await queryRunner.manager.save(newPrescrition)
-            res.status(201).json({ doctor, patient, newPrescrition })
+            res.status(StatusCodes.CREATED).json({ message: ReasonPhrases.CREATED, doctor, patient, newPrescrition })
             await queryRunner.commitTransaction()
 
         } catch (err) {
@@ -69,25 +70,25 @@ export default class PrescriptionController {
         try {
             const { prescriptionId } = req.params
             const { userId } = req.body
-            const patientId = await UserModules.findUserByNid(userId)
+            const patient = await UserModules.findUserByNid(userId)
             const prescription = await prescriptionModule.findPrescription(prescriptionId, ['patient'])
 
-            if (patientId === null) {
-                throw createhttperror.NotFound("you are not a patient")
+            if (!patient) {
+                throw createhttperror(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED)
             }
 
-            if (patientId.id !== prescription.patient.id) {
-                throw createhttperror.Unauthorized("you don't take this prescrption")
+            if (patient.id !== prescription.patient.id) {
+                throw createhttperror(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED)
             }
 
             if (!prescription) {
-                throw createhttperror.NotFound("can't find this")
+                throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
             }
 
             prescription.status = 'done'
             await AppDataSource.manager.save(prescription)
 
-            res.status(200).json({ message: 'updated', prescription })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, prescription })
         } catch (err) {
             next(err)
         }
@@ -102,12 +103,12 @@ export default class PrescriptionController {
                 'prescribedDrugs', 'prescribedDrugs.drug'
             ]);
             if (!prescription) {
-                throw createhttperror.NotFound("can't find this")
+                throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
             }
 
             await AppDataSource.manager.save(prescription)
 
-            res.status(200).json({ message: 'signlePresc', prescription })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, prescription })
         } catch (err) {
             next(err)
         }
@@ -125,9 +126,8 @@ export default class PrescriptionController {
             const completedPresc = prescriptions.filter(presc => presc.status === 'done').length;
             const notCompletedPresc = prescriptions.filter(presc => presc.status === 'taking').length;
 
-
-            res.status(200).json({
-                message: 'here',
+            res.status(StatusCodes.OK).json({
+                message: ReasonPhrases.OK,
                 prescriptions,
                 completed: completedPresc,
                 notCompleted: notCompletedPresc
@@ -136,6 +136,4 @@ export default class PrescriptionController {
             next(err)
         }
     }
-
-
 }

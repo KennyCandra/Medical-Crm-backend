@@ -13,12 +13,10 @@ import { Diagnosis } from "./diagnosis";
 import { Pallergy } from "./Pallergy";
 import { ReportsEntity } from "./ReportsEntity";
 import { PasswordResetToken } from "./resetPw";
+import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
-export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string
-
+export class User extends DefaultDocument {
     @Column({ nullable: false })
     first_name: string
 
@@ -34,11 +32,12 @@ export class User {
     @Column({ nullable: false })
     password: string
 
-    @Column({ type: 'enum', enum: ['doctor', 'patient', 'owner'], nullable: false })
-    role: 'doctor' | 'patient' | 'admin'
 
     @Column({ nullable: false, type: 'date' })
     birth_date: Date
+
+    @Column({ type: 'enum', enum: ['doctor', 'patient', 'owner'], nullable: false })
+    role: 'doctor' | 'patient' | 'admin'
 
     @OneToOne(() => DoctorProfile, (profile) => profile.user, { nullable: true })
     doctorProfile?: DoctorProfile
@@ -69,10 +68,5 @@ export class User {
     @OneToMany(() => PasswordResetToken, (token) => token.user)
     passwordResetTokens: PasswordResetToken[]
 
-    @CreateDateColumn()
-    created_at: Date
-
-    @UpdateDateColumn()
-    updated_at: Date
 }
 

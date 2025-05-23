@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../helpers/verifyToken";
+import { StatusCodes, ReasonPhrases } from "http-status-codes";
 
 declare module "express-serve-static-core" {
     interface Request {
@@ -19,14 +20,14 @@ class Auth {
         try {
             const accessToken = req.get('Authorization');
             if (!accessToken) {
-                res.status(401).json({ message: "Not Authenticated" });
+                res.status(StatusCodes.UNAUTHORIZED).json({ message: ReasonPhrases.UNAUTHORIZED });
                 return;
             }
 
             const { decodedToken, expired } = await verifyToken(accessToken);
 
             if (expired) {
-                res.status(401).json({ message: "Not Authenticated" });
+                res.status(StatusCodes.UNAUTHORIZED).json({ message: ReasonPhrases.UNAUTHORIZED });
                 return;
             }
             req.body.role = (decodedToken as DecodedToken).role
@@ -35,7 +36,7 @@ class Auth {
 
 
         } catch (error) {
-            res.status(500).json({ message: "Authentication error" });
+            next(error);
         }
     }
 }

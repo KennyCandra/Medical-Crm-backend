@@ -6,13 +6,14 @@ import prescriptionModule from "../modules/PrescriptionModule";
 import PallergyModule from "../modules/PallergyModule";
 import extractJsonFromString from "../helpers/JsonCut";
 import UserModules from "../modules/UserModules";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 class DrugController {
     static async fetchAllDrugs(req: Request, res: Response, next: NextFunction) {
         try {
             const { value } = req.body
             const drugs = await DrugsModule.allDrugs(value)
-            res.status(200).json({ message: 'here is the drugs', drugs })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, drugs })
         } catch (err) {
             next(err)
         }
@@ -40,7 +41,7 @@ class DrugController {
                 The drugs are: ${drug}.`,
             });
             const text = displayTextAfterNumbers(response.text);
-            res.status(200).json({ text })
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, text })
         } catch (err) {
             console.log(err)
             next(err)
@@ -106,7 +107,7 @@ class DrugController {
             const json = extractJsonFromString(analysisText)
             const parsedText = JSON.parse(json)
 
-            res.status(200).json(parsedText)
+            res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, data: parsedText })
         } catch (err) {
             next(err)
         }

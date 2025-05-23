@@ -2,6 +2,7 @@ import { User } from "../entities/user"
 import bcrypt from 'bcrypt'
 import createHttpError from 'http-errors'
 import { AppDataSource } from "../../ormconfig"
+import { ReasonPhrases, StatusCodes } from "http-status-codes"
 
 export default class UserModules {
 
@@ -31,12 +32,7 @@ export default class UserModules {
 
             return newUser
         } catch (err) {
-            console.log(err)
-            if (err.code === '23505') {
-                throw createHttpError.BadRequest('NID already exists');
-            } else {
-                throw createHttpError.InternalServerError('server error');
-            }
+            throw err
         }
     }
 
@@ -44,11 +40,13 @@ export default class UserModules {
         try {
             const user = await AppDataSource.getRepository(User).createQueryBuilder('user')
                 .where('user.NID = :nid', { nid })
+                .leftJoinAndSelect('user.doctorProfile', 'doctor')
                 .getOne()
             return user
         } catch (err) {
             console.log(err)
-            throw createHttpError(500, 'internal server error')
+            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
+
         }
     }
 
@@ -60,7 +58,34 @@ export default class UserModules {
             return user
         } catch (err) {
             console.log(err)
-            throw createHttpError(500, 'internal server error')
+            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
+
+        }
+    }
+
+    static async findUserById(id: string) {
+        try {
+            const user = await AppDataSource.getRepository(User).createQueryBuilder('user')
+                .where('user.id = :id', { id })
+                .getOne()
+            return user
+        } catch (err) {
+            console.log(err)
+            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
+
+        }
+    }
+
+
+    static async searchUsersByNid(nid: string) {
+        try {
+            const users = await AppDataSource.getRepository(User).createQueryBuilder('user')
+                .where('user.NID LIKE :nid', { nid: `%${nid}%` })
+                .getMany()
+            return users
+        } catch (err) {
+            console.log(err)
+            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
         }
     }
 
