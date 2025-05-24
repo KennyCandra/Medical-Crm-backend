@@ -3,8 +3,7 @@ import { PasswordResetToken } from "../entities/resetPw";
 import { User } from "../entities/user";
 import crypto from 'crypto'
 import createHttpError from 'http-errors'
-import { StatusCodes, ReasonPhrases } from "http-status-codes";
-
+import { StatusCodes , ReasonPhrases } from 'http-status-codes'
 
 export default class PasswordResetTokenModules {
     static async createToken(user: User) {

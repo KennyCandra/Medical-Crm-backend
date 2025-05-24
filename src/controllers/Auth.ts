@@ -185,6 +185,7 @@ class AuthController {
     static async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const refreshToken = req.cookies['refreshToken']
+            console.log('here')
             const token = await verifyToken(refreshToken)
             if (token.expired) {
                 res.status(StatusCodes.UNAUTHORIZED).json({ message: 'please login again' })
