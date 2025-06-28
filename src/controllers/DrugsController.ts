@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express"
 import DrugsModule from "../modules/DrugsModule";
 import displayTextAfterNumbers from "../helpers/displayTextAfterNumbers";
-import { ai } from "../../app";
+import { ai } from "../../api/app";
 import prescriptionModule from "../modules/PrescriptionModule";
 import PallergyModule from "../modules/PallergyModule";
 import extractJsonFromString from "../helpers/JsonCut";
