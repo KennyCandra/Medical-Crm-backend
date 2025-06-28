@@ -24,7 +24,7 @@ app.use(cookiesParser())
 
 
 app.use(cors({
-    origin: ['https://lambent-alfajores-c5c459.netlify.app', 'http://localhost:5173'],
+    origin: ['https://medical-crm-fronted.vercel.app', 'http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -39,6 +39,9 @@ app.use('/drug', DrugRoutes)
 app.use('/analytics', AnalyticsRoutes)
 app.use('/allergy', AllergyRoutes)
 app.use('/reports', ReportRouter)
+app.get('/', (req, res) => {
+    res.send('Hello World')
+})
 
 export const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
