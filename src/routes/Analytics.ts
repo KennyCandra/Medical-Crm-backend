@@ -13,4 +13,5 @@ router.get('/classification/:id' , AnalyticsController.specificClassificationAna
 router.get('/:id', AnalyticsController.speificCategoryAnalytics)
 
 router.get('/', AnalyticsController.basicAnalytics)
+
 export default router

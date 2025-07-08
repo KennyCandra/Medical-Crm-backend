@@ -17,8 +17,8 @@ export default class AllergyModule {
         try {
             const value = `%${searchTerm}%`;
             const allergies = await AppDataSource.getRepository(Allergy)
-                .createQueryBuilder('d')
-                .where('d.name LIKE :value', { value })
+                .createQueryBuilder('a')
+                .where('a.name LIKE :value', { value })
                 .getMany();
 
             return allergies

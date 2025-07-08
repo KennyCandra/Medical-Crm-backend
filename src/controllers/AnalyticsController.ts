@@ -104,7 +104,7 @@ export class AnalyticsController {
     static async specificDiseaseAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { role } = req.body
-            if (role !== "admin") {
+            if (role !== "owner") {
                 res.status(409).json({ message: 'UnAuthorized' })
             }
             const { diseaseId } = req.params

@@ -1,11 +1,14 @@
 {
   "name": "medicalcrm",
   "version": "1.0.0",
-  "description": "Medical CRM backend",
-  "main": "api/index.ts",
+  "description": "medical rm",
+  "main": "app.ts",
   "scripts": {
-    "dev": "nodemon --exec ts-node api/index.ts",
-    "build": "tsc"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --exec ts-node ./app.ts",
+    "build": "tsc",
+    "start": "node ./app.js",
+    "debug": "nodemon --inspect --exec node -r ts-node/register ./app.ts"
   },
   "author": "kenny",
   "license": "ISC",
@@ -37,6 +40,7 @@
     "reflect-metadata": "^0.2.2",
     "twilio": "^5.6.1",
     "typeorm": "^0.3.21",
+    "uninstall": "^0.0.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.4"
   }
