@@ -18,7 +18,6 @@ export class SpecializationModules {
     static async allSpecialization() {
         try {
             const specializations = await AppDataSource.getRepository(Specialization).find()
-            console.log(specializations)
             return specializations
         } catch (err) {
             throw createHttpError.InternalServerError['internal server error']

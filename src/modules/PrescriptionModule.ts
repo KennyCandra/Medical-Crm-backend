@@ -30,10 +30,6 @@ class prescriptionModule {
 
             if (relations.includes('patient')) {
                 queryBuilder.leftJoinAndSelect('prescription.patient', 'patient');
-
-                if (relations.includes('patient.user')) {
-                    queryBuilder.leftJoinAndSelect('patient.user', 'patientUser');
-                }
             }
 
             if (relations.includes('doctor')) {
@@ -67,7 +63,6 @@ class prescriptionModule {
                 .leftJoinAndSelect('prescription.doctor', 'doctor')
                 .leftJoinAndSelect('prescription.patient', 'patient')
                 .leftJoinAndSelect('doctor.user', 'doctorProfile')
-                .leftJoinAndSelect('patient.user', 'patientProfile')
                 .orderBy('CASE WHEN prescription.status = \'taking\' THEN 1 WHEN prescription.status = \'done\' THEN 2 END', 'ASC')
                 .addOrderBy('prescription.start_date', "DESC");
 

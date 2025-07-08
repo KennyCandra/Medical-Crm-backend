@@ -9,7 +9,7 @@ router.get('/:nid', AllergiesController.getAllergiesForPatient)
 
 router.post('/add', Auth.checkToken, AllergiesController.addAllergy)
 
-router.get('/specific/:allergyId', AllergiesController.getSpecificAllergy)
+router.get('/specific/:allergyText', AllergiesController.getSpecificAllergy)
 
 router.delete('/remove/:pallergyId', AllergiesController.removePllergy)
 

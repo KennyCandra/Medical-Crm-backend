@@ -39,6 +39,24 @@ class Auth {
             next(error);
         }
     }
+
+    static async checkAdminRole(req: Request, res: Response, next: NextFunction) {
+        const { role } = req.body;
+        if (role !== "owner") {
+            res.status(StatusCodes.FORBIDDEN).json({ message: ReasonPhrases.FORBIDDEN });
+            return;
+        }
+        next();
+    }
+
+    static async checkDoctorRole(req: Request, res: Response, next: NextFunction) {
+        const { role } = req.body;
+        if (role !== "doctor") {
+            res.status(StatusCodes.FORBIDDEN).json({ message: ReasonPhrases.FORBIDDEN });
+            return;
+        }
+        next();
+    }
 }
 
 export default Auth;
