@@ -28,7 +28,7 @@ class AuthController {
         firstName,
         lastName,
         gender,
-        NID,
+        nid,
         password,
         role,
         birth_date,
@@ -36,7 +36,8 @@ class AuthController {
         email,
       } = req.body;
 
-      if (!NID.startsWith("2") && !NID.startsWith("3")) {
+      console.log(nid);
+      if (!nid.startsWith("2") && !nid.startsWith("3")) {
         res.status(StatusCodes.BAD_REQUEST).json({
           error: [
             {
@@ -52,7 +53,7 @@ class AuthController {
         firstName,
         lastName,
         gender,
-        NID,
+        nid,
         role,
         password,
         email,
@@ -102,7 +103,7 @@ class AuthController {
                 <p>Your account has been created successfully.</p>
                 <p>Please use the following credentials to login:</p>
                 <p>Email: ${email}</p>
-                <p>Your National ID: ${NID}</p>
+                <p>Your National ID: ${nid}</p>
                 `;
         const msg = {
           to: email,
@@ -133,7 +134,7 @@ class AuthController {
         if (err.detail.includes("NID")) {
           error.push({
             field: "nid",
-            message: "NID already exists",
+            message: "nid already exists",
           });
         }
         res.status(StatusCodes.CONFLICT).json({
@@ -160,7 +161,7 @@ class AuthController {
           message: ReasonPhrases.NOT_FOUND,
           error: [
             {
-              field: "nid",
+              field: "NID",
               message: "user not found",
             },
           ],
