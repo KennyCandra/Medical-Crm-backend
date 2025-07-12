@@ -12,8 +12,14 @@ export const AppDataSource = new DataSource({
   synchronize: true,
   ssl: true,
   logging: true,
-  entities: process.env.NODE_ENV === 'development' ?  ["src/entities/*.ts"] : ["src/entities/*.js"],
-  migrations: process.env.NODE_ENV === 'development' ? ["src/migrations/*.ts"] : ["src/migrations/*.js"],
+  entities:
+    process.env.ENV_MODE === "development"
+      ? ["src/entities/*.ts"]
+      : ["src/entities/*.js"],
+  migrations:
+    process.env.ENV_MODE === "development"
+      ? ["src/migrations/*.ts"]
+      : ["src/migrations/*.js"],
   subscribers: [],
   schema: "public",
 });

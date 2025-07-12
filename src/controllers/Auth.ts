@@ -36,7 +36,6 @@ class AuthController {
         email,
       } = req.body;
 
-      console.log(nid);
       if (!nid.startsWith("2") && !nid.startsWith("3")) {
         res.status(StatusCodes.BAD_REQUEST).json({
           error: [
