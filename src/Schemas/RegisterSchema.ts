@@ -22,7 +22,7 @@ export const RegisterPatientSchema = z.object({
     .min(14)
     .max(14)
     .refine((val) => val.startsWith("2") || val.startsWith("3"), {
-      message: "Password must start with 2 or 3",
+      message: "NID must start with 2 or 3",
     }),
   password: z.string().min(8),
   blood_type: bloodType,
