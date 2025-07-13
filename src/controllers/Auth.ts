@@ -8,14 +8,16 @@ import DoctorProfileModules from "../modules/DoctorModules";
 import { SpecializationModules } from "../modules/SpecializationModules";
 import { verifyToken } from "../helpers/verifyToken";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
-import sgMail from "@sendgrid/mail";
 import { createToken } from "../helpers/createToken";
 import PasswordResetTokenModules from "../modules/PasswordResetTokenModules";
 import PrescriptionModule from "../modules/PrescriptionModule";
 import PallergyModule from "../modules/PallergyModule";
 import DiagnosisModule from "../modules/DiagnosisModule";
+import { Resend } from "resend";
+import path from "path";
+import fs from "fs";
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+const resend = new Resend(process.env.RESEND_API);
 
 class AuthController {
   static async SignUp(req: Request, res: Response, next: NextFunction) {
@@ -35,18 +37,6 @@ class AuthController {
         blood_type,
         email,
       } = req.body;
-
-      if (!nid.startsWith("2") && !nid.startsWith("3")) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-          error: [
-            {
-              field: "nid",
-              message: "please enter a valid NID",
-            },
-          ],
-        });
-        return;
-      }
 
       const newUser = await UserModules.createUser(
         firstName,
@@ -92,26 +82,28 @@ class AuthController {
         path: "/",
         maxAge: 60 * 60 * 24 * 60 * 1000,
       });
+      let message = fs.readFileSync(
+        path.join(__dirname, "../StaticFiles/message.html"),
+        "utf8"
+      );
+      const logo = fs.readFileSync(
+        path.join(__dirname, "../images/logo.png"),
+        "base64"
+      );
+      message = message
+        .replace("${email}", email)
+        .replace("${nid}", nid)
+        .replace("${logo}", logo);
 
       await queryRunner.commitTransaction();
-
       try {
-        const emailContent = `
-                <h1>Welcome to our platform!</h1>
-                <p>Thank you for signing up with us!</p>
-                <p>Your account has been created successfully.</p>
-                <p>Please use the following credentials to login:</p>
-                <p>Email: ${email}</p>
-                <p>Your National ID: ${nid}</p>
-                `;
-        const msg = {
+        const { data } = await resend.emails.send({
+          from: "Acme <onboarding@resend.dev>",
           to: email,
-          from: process.env.SENDGRID_FROM_EMAIL as string,
           subject: "Welcome to our platform!",
-          html: emailContent,
-        };
-
-        await sgMail.send(msg);
+          html: message,
+        });
+        console.log(data);
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
       }
@@ -124,16 +116,23 @@ class AuthController {
 
       if (err.detail && typeof err.detail === "string") {
         const error: { field: string; message: string }[] = [];
+        console.log(err.detail);
         if (err.detail.includes("email")) {
           error.push({
             field: "email",
-            message: "email already exists",
+            message: "Email already exists",
           });
         }
         if (err.detail.includes("NID")) {
           error.push({
             field: "nid",
-            message: "nid already exists",
+            message: "Nid already exists",
+          });
+        }
+        if (err.detail.includes("medical_license_number")) {
+          error.push({
+            field: "license",
+            message: "License already exists",
           });
         }
         res.status(StatusCodes.CONFLICT).json({
@@ -280,19 +279,24 @@ class AuthController {
       }
       const token = await PasswordResetTokenModules.createToken(user);
       await AppDataSource.manager.save(token);
-      const resetPasswordLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token.token}`;
-      const msg = {
+      const resetPasswordLink = `${process.env.FRONTEND_URL}/reset-password?token=${token.token}`;
+      const logo = fs.readFileSync(
+        path.join(__dirname, "../images/logo.png"),
+        "base64"
+      );
+      let message = fs.readFileSync(
+        path.join(__dirname, "../StaticFiles/reset-password.html"),
+        "utf8"
+      ).replace("${email}", user.email).replace("${logo}", logo).replace("${resetPasswordLink}", resetPasswordLink);
+
+      const { data  , error} = await resend.emails.send({
+        from: "Acme <onboarding@resend.dev>",
         to: user.email,
-        from: process.env.SENDGRID_FROM_EMAIL as string,
         subject: "Reset Password",
-        html: `
-                <h1>Reset Password</h1>
-                <p>Click the link below to reset your password</p>
-                <a href="${resetPasswordLink}">Reset Password</a>
-                <p>This link will expire in 1 day</p>
-                `,
-      };
-      await sgMail.send(msg);
+        html: message,
+      });
+      console.log(error);
+      console.log(data);
       res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
     } catch (err) {
       next(err);
@@ -363,7 +367,6 @@ class AuthController {
     }
   }
 
-  //why?
   static async fetchUser(req: Request, res: Response, next: NextFunction) {
     try {
       const user = await AppDataSource.getRepository(User)

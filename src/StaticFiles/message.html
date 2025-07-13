@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Creation Confirmation</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+      }
+      .container {
+        background-color: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #663fba;
+        padding-bottom: 20px;
+      }
+      .logo {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 15px;
+        background-color: #e0b6e5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: #663fba;
+      }
+      h1 {
+        color: #663fba;
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+      }
+      .content {
+        margin-bottom: 30px;
+      }
+      .credentials-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .credentials-title {
+        font-weight: 600;
+        color: #663fba;
+        margin-bottom: 15px;
+        font-size: 16px;
+      }
+      .credential-item {
+        margin-bottom: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+      }
+      .credential-item:last-child {
+        border-bottom: none;
+      }
+      .credential-label {
+        font-weight: 500;
+        color: #495057;
+        display: inline-block;
+        width: 120px;
+      }
+      .credential-value {
+        color: #212529;
+        font-family: "Courier New", monospace;
+        background-color: #fff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+      }
+      .footer {
+        text-align: center;
+        font-size: 14px;
+        color: #6c757d;
+        border-top: 1px solid #e9ecef;
+        padding-top: 20px;
+      }
+      .important-note {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 20px 0;
+        color: #856404;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="logo">
+          <img
+            src="data:image/png;base64,${logo}"
+            alt="Sanova Logo"
+            style="width: 60px; height: 60px"
+          />
+        </div>
+        <h1>Account Creation Confirmation</h1>
+      </div>
+      <div class="content">
+        <p>Dear Valued User,</p>
+        <p>
+          We are pleased to confirm that your account has been successfully
+          created on our platform. You now have access to our comprehensive
+          healthcare management system.
+        </p>
+        <div class="credentials-box">
+          <div class="credentials-title">Account Access Credentials</div>
+          <div class="credential-item">
+            <span class="credential-label">Email Address:</span>
+            <span class="credential-value">${email}</span>
+          </div>
+          <div class="credential-item">
+            <span class="credential-label">National ID:</span>
+            <span class="credential-value">${nid}</span>
+          </div>
+        </div>
+        <div class="important-note">
+          <strong>Important:</strong> Please store these credentials securely
+          and do not share them with unauthorized individuals. Your National ID
+          serves as your unique identifier within our system.
+        </div>
+        <p>
+          To proceed with accessing your account, please use the credentials
+          provided above. Should you encounter any difficulties during the login
+          process or require assistance with your account, please do not
+          hesitate to contact our support team.
+        </p>
+        <p>
+          Thank you for choosing our platform for your healthcare management
+          needs.
+        </p>
+      </div>
+      <div class="footer">
+        <p>
+          This is an automated message. Please do not reply to this
+          notification.
+        </p>
+        <p>&copy; 2025 Sanova Healthcare Platform. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>
