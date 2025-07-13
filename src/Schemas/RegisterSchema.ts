@@ -21,7 +21,7 @@ export const RegisterPatientSchema = z.object({
   password: z
     .string()
     .min(8)
-    .refine((val) => !val.startsWith("2") || !val.startsWith("3"), {
+    .refine((val) => val.startsWith("2") || val.startsWith("3"), {
       message: "Password must start with 2 or 3",
     }),
   blood_type: bloodType,
