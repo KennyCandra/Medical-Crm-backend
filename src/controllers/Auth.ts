@@ -19,6 +19,11 @@ import fs from "fs";
 
 const resend = new Resend(process.env.RESEND_API);
 
+resend.domains.create({
+  name: "medical-crm-backend-production-8b4b.up.railway.app",
+  customReturnPath: "send",
+});
+
 class AuthController {
   static async SignUp(req: Request, res: Response, next: NextFunction) {
     const queryRunner = AppDataSource.createQueryRunner();
@@ -97,12 +102,13 @@ class AuthController {
 
       await queryRunner.commitTransaction();
       try {
-        const { data } = await resend.emails.send({
+        const { data , error} = await resend.emails.send({
           from: "Acme <onboarding@resend.dev>",
           to: email,
           subject: "Welcome to our platform!",
           html: message,
         });
+        console.log(error);
         console.log(data);
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
@@ -207,6 +213,80 @@ class AuthController {
     }
   }
 
+  static async forgetPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { email } = req.body;
+      const user = await UserModules.findUserByEmail(email);
+
+      if (!user) {
+        res.status(StatusCodes.NOT_FOUND).json({
+          message: ReasonPhrases.NOT_FOUND,
+          error: [
+            {
+              field: "email",
+              message: "user not found",
+            },
+          ],
+        });
+        return;
+      }
+      const token = await PasswordResetTokenModules.createToken(user);
+      await AppDataSource.manager.save(token);
+      const resetPasswordLink = `${process.env.FRONTEND_URL}/reset-password?token=${token.token}`;
+      const logo = fs.readFileSync(
+        path.join(__dirname, "../images/logo.png"),
+        "base64"
+      );
+      let message = fs
+        .readFileSync(
+          path.join(__dirname, "../StaticFiles/reset-password.html"),
+          "utf8"
+        )
+        .replace("${email}", user.email)
+        .replace("${logo}", logo)
+        .replace("${resetPasswordLink}", resetPasswordLink);
+      const { data, error } = await resend.emails.send({
+        from: "Acme <onboarding@resend.dev>",
+        to: user.email,
+        subject: "Reset Password",
+        html: message,
+      });
+      console.log(error);
+      console.log(data);
+      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async resetPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { token, password } = req.body;
+      console.log(token, password);
+      const tokenEntity = await PasswordResetTokenModules.verifyToken(token);
+      if (!tokenEntity) {
+        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+      }
+
+      const user = tokenEntity.user;
+      const hashedPw = await bcrypt.hash(password, 10);
+      user.password = hashedPw;
+      await AppDataSource.manager.save(user);
+      await AppDataSource.manager.remove(tokenEntity);
+      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async refreshToken(
     req: Request,
     res: Response,
@@ -252,76 +332,6 @@ class AuthController {
         .json({ message: ReasonPhrases.OK, accessToken, user });
     } catch (err) {
       console.log(err);
-      next(err);
-    }
-  }
-
-  static async forgetPassword(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { email } = req.body;
-      const user = await UserModules.findUserByEmail(email);
-
-      if (!user) {
-        res.status(StatusCodes.NOT_FOUND).json({
-          message: ReasonPhrases.NOT_FOUND,
-          error: [
-            {
-              field: "email",
-              message: "user not found",
-            },
-          ],
-        });
-        return;
-      }
-      const token = await PasswordResetTokenModules.createToken(user);
-      await AppDataSource.manager.save(token);
-      const resetPasswordLink = `${process.env.FRONTEND_URL}/reset-password?token=${token.token}`;
-      const logo = fs.readFileSync(
-        path.join(__dirname, "../images/logo.png"),
-        "base64"
-      );
-      let message = fs.readFileSync(
-        path.join(__dirname, "../StaticFiles/reset-password.html"),
-        "utf8"
-      ).replace("${email}", user.email).replace("${logo}", logo).replace("${resetPasswordLink}", resetPasswordLink);
-
-      const { data  , error} = await resend.emails.send({
-        from: "Acme <onboarding@resend.dev>",
-        to: user.email,
-        subject: "Reset Password",
-        html: message,
-      });
-      console.log(error);
-      console.log(data);
-      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async resetPassword(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { token, newPassword } = req.body;
-      const tokenEntity = await PasswordResetTokenModules.verifyToken(token);
-      if (!tokenEntity) {
-        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
-      }
-
-      const user = tokenEntity.user;
-      const hashedPw = await bcrypt.hash(newPassword, 10);
-      user.password = hashedPw;
-      await AppDataSource.manager.save(user);
-      await AppDataSource.manager.remove(tokenEntity);
-      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
-    } catch (err) {
       next(err);
     }
   }
