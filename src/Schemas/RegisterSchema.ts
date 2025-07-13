@@ -17,13 +17,14 @@ export const RegisterPatientSchema = z.object({
   firstName: z.string().min(3),
   lastName: z.string().min(3),
   gender: gender,
-  nid: z.string().min(14).max(14),
-  password: z
+  nid: z
     .string()
-    .min(8)
+    .min(14)
+    .max(14)
     .refine((val) => val.startsWith("2") || val.startsWith("3"), {
-      message: "Password must start with 2 or 3",
+      message: "NID must start with 2 or 3",
     }),
+  password: z.string().min(8),
   blood_type: bloodType,
   role: role,
   email: z.string().email(),
@@ -35,6 +36,6 @@ export const LoginSchema = z.object({
 });
 
 export const resetTokenSchema = z.object({
-  newPassword: z.string().min(8),
+  password: z.string().min(8),
   token: z.string().min(64).max(64, "Invalid token"),
 });
