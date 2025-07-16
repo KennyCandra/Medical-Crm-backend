@@ -16,6 +16,8 @@ import DiagnosisModule from "../modules/DiagnosisModule";
 import { Resend } from "resend";
 import path from "path";
 import fs from "fs";
+import RefreshTokenModule from "../modules/RefreshTokenModule";
+import { RefreshToken } from "../entities/refreshToken";
 
 const resend = new Resend(process.env.RESEND_API);
 
@@ -102,7 +104,7 @@ class AuthController {
 
       await queryRunner.commitTransaction();
       try {
-        const { data , error} = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
           from: "Acme <onboarding@resend.dev>",
           to: email,
           subject: "Welcome to our platform!",
@@ -193,11 +195,17 @@ class AuthController {
       );
 
       const refreshToken = createToken({ userId: user.id }, "60d");
+      const refreshTokenSignature = refreshToken.split(".")[2];
+      const refreshTokenEntity = await RefreshTokenModule.createRefreshToken(
+        user,
+        refreshTokenSignature
+      );
+      await AppDataSource.manager.save(refreshTokenEntity);
 
       res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
         secure: true,
         sameSite: "none",
-        httpOnly: true,
         path: "/",
         maxAge: 60 * 60 * 24 * 60 * 1000,
       });
@@ -292,17 +300,43 @@ class AuthController {
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
     try {
       const refreshToken = req.cookies["refreshToken"];
-      const token = await verifyToken(refreshToken);
-      if (token.expired) {
-        res
-          .status(StatusCodes.UNAUTHORIZED)
-          .json({ message: "please login again" });
-        return;
+      if (!refreshToken) {
+        throw createHttpError(
+          StatusCodes.UNAUTHORIZED,
+          ReasonPhrases.UNAUTHORIZED
+        );
       }
 
-      const user = await UserModules.findUserById(token.decodedToken.userId);
+      const token = await verifyToken(refreshToken);
+      if (token.expired) {
+        throw createHttpError(
+          StatusCodes.UNAUTHORIZED,
+          ReasonPhrases.UNAUTHORIZED
+        );
+      }
+      const refreshTokenSignature = refreshToken.split(".")[2];
+      const refreshTokenEntity = await RefreshTokenModule.findRefreshToken(
+        refreshTokenSignature
+      );
+      if (!refreshTokenEntity) {
+        throw createHttpError(
+          StatusCodes.UNAUTHORIZED,
+          ReasonPhrases.UNAUTHORIZED
+        );
+      }
+      if (refreshTokenEntity.expiresAt < new Date()) {
+        throw createHttpError(
+          StatusCodes.UNAUTHORIZED,
+          ReasonPhrases.UNAUTHORIZED
+        );
+      }
+
+      const user = refreshTokenEntity.user;
 
       const accessToken = createToken(
         {
@@ -314,6 +348,16 @@ class AuthController {
       );
 
       const newRefreshToken = createToken({ userId: user.id }, "60d");
+      const newRefreshTokenSignature = newRefreshToken.split(".")[2];
+      const newRefreshTokenEntity = await RefreshTokenModule.createRefreshToken(
+        user,
+        newRefreshTokenSignature
+      );
+      await queryRunner.manager.save(newRefreshTokenEntity);
+      await queryRunner.manager.delete(RefreshToken, {
+        tokenSignature: refreshTokenSignature,
+      });
+      await queryRunner.commitTransaction();
 
       res.cookie("refreshToken", newRefreshToken, {
         secure: true,
@@ -332,7 +376,10 @@ class AuthController {
         .json({ message: ReasonPhrases.OK, accessToken, user });
     } catch (err) {
       console.log(err);
+      await queryRunner.rollbackTransaction();
       next(err);
+    } finally {
+      await queryRunner.release();
     }
   }
 
