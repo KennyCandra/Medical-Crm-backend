@@ -25,7 +25,11 @@ export default class RefreshTokenModule {
         tokenSignature,
       },
       relations: {
-        user: true,
+        user: {
+          doctorProfile: {
+            specialization: true,
+          },
+        },
       },
     });
   }

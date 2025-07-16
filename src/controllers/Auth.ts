@@ -110,7 +110,10 @@ class AuthController {
           subject: "Welcome to our platform!",
           html: message,
         });
-        console.error("Error occurred while sending the email:", error?.message || error);
+        console.error(
+          "Error occurred while sending the email:",
+          error?.message || error
+        );
         console.log(data);
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
