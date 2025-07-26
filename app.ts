@@ -40,6 +40,10 @@ app.use(
   })
 );
 
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
+});
+
 app.use("/auth", AuthRoutes);
 app.use("/spec", SpecializationRoutes);
 app.use("/diagnosis", DiagnosisRoutes);
