@@ -72,23 +72,11 @@ class AuthController {
         await queryRunner.manager.save(doctor);
       }
 
-      const userId = newUser.id;
-      const userRole = newUser.role;
-      const accessToken = createToken({ userId, role: userRole }, "15m");
-      const refreshToken = createToken({ userId }, "60d");
-
       newUser.password = undefined;
       newUser.created_at = undefined;
       newUser.updated_at = undefined;
       newUser.id = undefined;
 
-      res.cookie("refreshToken", refreshToken, {
-        secure: true,
-        sameSite: "none",
-        httpOnly: true,
-        path: "/",
-        maxAge: 60 * 60 * 24 * 60 * 1000,
-      });
       let message = fs.readFileSync(
         path.join(__dirname, "../StaticFiles/message.html"),
         "utf8"
@@ -121,7 +109,7 @@ class AuthController {
 
       res
         .status(StatusCodes.CREATED)
-        .json({ message: ReasonPhrases.CREATED, newUser, accessToken });
+        .json({ message: ReasonPhrases.CREATED, newUser });
     } catch (err: any) {
       await queryRunner.rollbackTransaction();
 
@@ -288,7 +276,7 @@ class AuthController {
       }
 
       const user = tokenEntity.user;
-      const hashedPw = await bcrypt.hash(password, 10);
+      const hashedPw = await bcrypt.hash(password, 12);
       user.password = hashedPw;
       await AppDataSource.manager.save(user);
       await AppDataSource.manager.remove(tokenEntity);
@@ -308,6 +296,7 @@ class AuthController {
     await queryRunner.startTransaction();
     try {
       const refreshToken = req.cookies["refreshToken"];
+
       if (!refreshToken) {
         throw createHttpError(
           StatusCodes.UNAUTHORIZED,
@@ -356,10 +345,10 @@ class AuthController {
         user,
         newRefreshTokenSignature
       );
-      await queryRunner.manager.save(newRefreshTokenEntity);
       await queryRunner.manager.delete(RefreshToken, {
         tokenSignature: refreshTokenSignature,
       });
+      await queryRunner.manager.save(newRefreshTokenEntity);
       await queryRunner.commitTransaction();
 
       res.cookie("refreshToken", newRefreshToken, {
@@ -392,6 +381,11 @@ class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
+      const refreshToken = req.cookies["refreshToken"];
+      const refreshTokenSignature = refreshToken.split(".")[2];
+      await AppDataSource.manager.delete(RefreshToken, {
+        tokenSignature: refreshTokenSignature,
+      });
       res.clearCookie("refreshToken", {
         secure: true,
         sameSite: "none",

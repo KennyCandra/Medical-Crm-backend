@@ -59,19 +59,20 @@ class prescriptionModule {
     static async findManyPrescriptions(doctorId: string, patientId: string) {
         try {
             const queryBuilder = AppDataSource.getRepository(Prescription)
-                .createQueryBuilder('prescription')
+                .createQueryBuilder('prescription');
+
+            if (doctorId) {
+                queryBuilder.where('prescription.doctor = :doctorId', { doctorId });
+            } else {
+                queryBuilder.where('prescription.patient = :patientId', { patientId });
+            }
+
+            queryBuilder
                 .leftJoinAndSelect('prescription.doctor', 'doctor')
                 .leftJoinAndSelect('prescription.patient', 'patient')
                 .leftJoinAndSelect('doctor.user', 'doctorProfile')
                 .orderBy('CASE WHEN prescription.status = \'taking\' THEN 1 WHEN prescription.status = \'done\' THEN 2 END', 'ASC')
                 .addOrderBy('prescription.start_date', "DESC");
-
-
-            if (doctorId) {
-                queryBuilder.where('doctor.id = :id', { id: doctorId });
-            } else {
-                queryBuilder.where('patient.id = :id', { id: patientId });
-            }
 
             const prescriptions = await queryBuilder.getMany();
             return prescriptions;

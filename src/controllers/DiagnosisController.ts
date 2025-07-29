@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import DoctorProfileModules from "../modules/DoctorModules";
 import DiagnosisModule from "../modules/DiagnosisModule";
-import DiseaseModule from "../modules/DiseaseModule";
 import { AppDataSource } from "../../ormconfig";
 import UserModules from "../modules/UserModules";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import createHttpError from "http-errors";
 export class DiagnosisController {
   static async createDiagonsis(
     req: Request,
@@ -12,16 +11,20 @@ export class DiagnosisController {
     next: NextFunction
   ) {
     try {
-      const { patientId, doctorId, diseaseId, severity } = req.body;
-      console.log(patientId, doctorId, diseaseId, severity);
-      const patient = await UserModules.findUserByNid(patientId);
-      const doctor = await DoctorProfileModules.findDoctor(doctorId);
-      const disease = await DiseaseModule.findDiseaseById(diseaseId);
+      const { patientId, doctorId, diseaseId, severity , notes } = req.body;
+      console.log(notes)
+      const previousDiagnosis = await DiagnosisModule.findForPatient(patientId);
+      const diseaseIds = previousDiagnosis.map((diagnosis) => diagnosis.disease.id);
+      console.log(previousDiagnosis.length)
+      if (diseaseIds.includes(diseaseId)) {
+        throw createHttpError.BadRequest("disease already exists");
+      }
       const diagnoses = await DiagnosisModule.diagnosesCreation(
-        patient,
-        doctor,
-        disease,
-        severity
+        patientId,
+        doctorId,
+        diseaseId,
+        severity,
+        notes
       );
       await AppDataSource.manager.save(diagnoses);
 

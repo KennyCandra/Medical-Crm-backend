@@ -10,7 +10,8 @@ export default class DiagnosisModule {
     patient: User,
     doctor: DoctorProfile,
     disease: Disease,
-    severity: "acute" | "severe" | "mild" | "chronic"
+    severity: "acute" | "severe" | "mild" | "chronic",
+    notes: string
   ) {
     try {
       const diagnoses = new Diagnosis();
@@ -18,6 +19,7 @@ export default class DiagnosisModule {
       diagnoses.patient = patient;
       diagnoses.disease = disease;
       diagnoses.severity = severity;
+      diagnoses.notes = notes;
       return diagnoses;
     } catch (err) {
       throw createhttperror[500]("internal server error");
@@ -29,6 +31,9 @@ export default class DiagnosisModule {
       const diagnoses = await AppDataSource.getRepository(Diagnosis).find({
         where: { patient: { id: patient.id } },
         relations: ["disease"],
+        order: {
+          created_at: "ASC",
+        },
       });
 
       return diagnoses;
