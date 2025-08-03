@@ -57,6 +57,17 @@ class Auth {
         }
         next();
     }
+
+    static checkRoles(allowedRoles: string[]) {
+        return async (req: Request, res: Response, next: NextFunction) => {
+            const { role } = req.body;
+            if (!allowedRoles.includes(role)) {
+                res.status(StatusCodes.FORBIDDEN).json({ message: ReasonPhrases.FORBIDDEN });
+                return;
+            }
+            next();
+        };
+    }
 }
 
 export default Auth;

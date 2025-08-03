@@ -20,7 +20,6 @@ class DrugsModule {
                 throw err
             }
         }
-
     }
 
     static async allDrugs(value: string) {
@@ -37,6 +36,19 @@ class DrugsModule {
                 .getRawMany();
             return drugs
 
+        }
+        catch (err) {
+            throw err
+        }
+    }
+
+    static async searchDrug(value: string) {
+        try {
+            const drugs = await AppDataSource.getRepository(Drug)
+                .createQueryBuilder('drug')
+                .where("drug.name ILIKE :value", { value: `%${value}%` })
+                .getRawMany();
+            return drugs
         }
         catch (err) {
             throw err

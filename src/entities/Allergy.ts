@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from "typeorm";
+import { Column, Entity, Index, OneToMany } from "typeorm";
 import { Pallergy } from "./Pallergy";
 import { DefaultDocument } from "./NormalDocument";
 
@@ -6,6 +6,7 @@ import { DefaultDocument } from "./NormalDocument";
 export class Allergy extends DefaultDocument {
 
     @Column({ unique: true, nullable: false, type: "citext" })
+    @Index({ unique: true })
     name: string;
 
     @OneToMany(() => Pallergy, (pallergy) => pallergy.allergy)

@@ -7,17 +7,17 @@ import createhttperror from "http-errors";
 
 export default class DiagnosisModule {
   static async diagnosesCreation(
-    patient: User,
-    doctor: DoctorProfile,
-    disease: Disease,
+    patient: string,
+    doctor: string,
+    disease: string,
     severity: "acute" | "severe" | "mild" | "chronic",
     notes: string
   ) {
     try {
       const diagnoses = new Diagnosis();
-      diagnoses.doctor = doctor;
-      diagnoses.patient = patient;
-      diagnoses.disease = disease;
+      diagnoses.doctor = {id : doctor} as DoctorProfile;
+      diagnoses.patient = {id : patient} as User;
+      diagnoses.disease = {id : disease} as Disease;
       diagnoses.severity = severity;
       diagnoses.notes = notes;
       return diagnoses;

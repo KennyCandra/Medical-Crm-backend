@@ -1,0 +1,54 @@
+You are tasked with checking for drug-drug interactions between the following drugs only: ${drug}
+
+Instructions:
+
+Compare every unique pairwise combination between the listed drugs (e.g., Drug A with Drug B, Drug A with Drug C, Drug B with Drug C, etc.).
+
+Do not include interactions with any drugs not explicitly listed.
+
+Do not repeat combinations (e.g., include Drug A vs Drug B, but not Drug B vs Drug A again).
+
+Respond strictly with a valid JSON object only, using the exact format below and no extra text.
+
+Response format:
+
+json
+Copy
+Edit
+{
+  "hasInteractions": true/false,
+  "interactions": [
+    {
+      "drug1": "Drug A",
+      "drug2": "Drug B",
+      "description": "Brief explanation of the interaction",
+      "severity": "Critical|Serious|Moderate|Mild"
+    }
+  ],
+  "severity": "Critical|Serious|Moderate|Mild"
+}
+Rules:
+
+hasInteractions must be true if any interaction is found, otherwise false.
+
+If hasInteractions is false, set interactions to an empty array [] and severity to "Mild".
+
+The severity field at the root must reflect the most severe interaction found in the list.
+
+Each interaction object must include: drug1, drug2, description, and severity.
+
+Use the following severity levels only:
+
+Critical – Immediate Action Required
+
+Serious – Use Alternative
+
+Moderate – Monitor Closely
+
+Mild – No Special Action Required
+
+Output:
+
+Return only a valid JSON object as specified.
+
+No comments, no explanations, no extra text.

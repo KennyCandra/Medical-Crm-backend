@@ -4,9 +4,9 @@ import DrugController from '../controllers/DrugsController'
 
 router.post('/', DrugController.fetchAllDrugs)
 
-router.get('/interaction', DrugController.getInteractions)
+router.post('/interaction', DrugController.getInteractions)
 
-router.get('/:nid', DrugController.checkOldInteractions)
+router.get('/search/:value', DrugController.searchDrug)
 
 
 export default router

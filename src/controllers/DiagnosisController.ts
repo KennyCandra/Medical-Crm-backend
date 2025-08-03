@@ -12,10 +12,8 @@ export class DiagnosisController {
   ) {
     try {
       const { patientId, doctorId, diseaseId, severity , notes } = req.body;
-      console.log(notes)
       const previousDiagnosis = await DiagnosisModule.findForPatient(patientId);
       const diseaseIds = previousDiagnosis.map((diagnosis) => diagnosis.disease.id);
-      console.log(previousDiagnosis.length)
       if (diseaseIds.includes(diseaseId)) {
         throw createHttpError.BadRequest("disease already exists");
       }

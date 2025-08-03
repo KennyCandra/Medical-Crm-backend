@@ -1,0 +1,49 @@
+You are tasked with checking for:
+Drug-drug interactions between each new drug and each of the patient’s current medications.
+Allergic reactions by comparing each new drug against the patient’s known allergies.
+
+Inputs:
+New drugs: ${drugs}
+Current medications: ${oldDrugs}
+Patient allergies: ${allergies}
+
+Check the following:
+For each new drug, check for interactions only with current medications.
+Do not check for interactions between new drugs themselves.
+Do not check for interactions between current medications themselves.
+For each new drug, check for allergic conflicts with any of the patient’s listed allergies.
+Output strictly as a valid JSON object only, with no extra text:
+
+json
+Copy
+Edit
+{
+  "hasInteractions": true/false,
+  "interactions": [
+    {
+      "drug1": "New Drug",
+      "drug2": "Current Medication",
+      "description": "Brief description of the interaction",
+      "severity": "Critical|Serious|Moderate|Mild"
+    }
+  ],
+  "hasAllergies": true/false,
+  "allergies": [
+    {
+      "drug": "New Drug",
+      "allergen": "Allergen or class name",
+      "severity": "Critical|Serious|Moderate|Mild"
+    }
+  ],
+  "recommendation": "If any interaction or allergy is found, provide a clear clinical recommendation. If none found, return: 'Safe to prescribe based on available information.'"
+}
+Severity levels:
+Critical: Immediate Action Required – Contraindicated
+Serious: Use Alternative – Avoid if possible
+Moderate: Monitor Closely – Adjust dose or monitor
+Mild: No Special Action Required – Minimal concern
+Instructions:
+Respond only with valid JSON — no explanation, no extra text.
+Use empty arrays [] if no interactions or allergies are found.
+Do not infer or include duplicate entries.
+Be specific, concise, and clinically accurate.
