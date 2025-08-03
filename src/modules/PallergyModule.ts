@@ -32,7 +32,6 @@ export default class PallergyModule {
                 .leftJoin('p.allergy', 'allergy')
                 .where('patient.id = :patientId', { patientId: patientId })
                 .getRawMany();
-            console.log(allergies)
 
             return allergies;
         } catch (err) {

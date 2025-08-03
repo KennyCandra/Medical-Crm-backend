@@ -4,13 +4,13 @@ import { AppDataSource } from "../../ormconfig"
 import createhttperror from 'http-errors'
 
 class prescribedDrugModule {
-    static async createPrescribedDrug(drugName: Drug, dose: string, frequency: string, time: "before" | "after") {
+    static async createPrescribedDrug(drugName: string, dose: string, frequency: string, time: "before" | "after") {
 
         try {
             const prescribedDrugRep = await AppDataSource.getRepository(PrescribedDrug)
             const newPrescribedDrug = prescribedDrugRep.create({
                 dosage: dose,
-                drug: drugName,
+                drug: {id : drugName} as Drug,
                 frequency: frequency,
                 time: time
             })

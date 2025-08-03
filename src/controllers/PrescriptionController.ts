@@ -10,6 +10,10 @@ import createhttperror from "http-errors";
 import { Prescription } from "../entities/prescription";
 import UserModules from "../modules/UserModules";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import {
+  DatabaseError,
+  handlePostgresError,
+} from "../utils/postgresErrorHandler";
 export default class PrescriptionController {
   static async createPrescription(
     req: Request,
@@ -23,25 +27,13 @@ export default class PrescriptionController {
     try {
       let prescribedDrugs: PrescribedDrug[] = [];
 
-      if (medication.length === 0) {
+      if (!medication || medication.length === 0) {
         res.status(400).json({ message: "please enter some drugs" });
         return;
       }
-
-      const doctor = await DoctorProfileModules.findDoctor(doctorId);
-      const patient = await UserModules.findUserByNid(patientId);
-
-      if (!doctor) {
-        res
-          .status(StatusCodes.NOT_FOUND)
-          .json({ message: ReasonPhrases.NOT_FOUND });
-        return;
-      }
-
       for (const med of medication) {
-        const drug: Drug = await DrugsModule.findDrug({ drugId: med.drug.id });
         const prescribedDrug = await prescribedDrugModule.createPrescribedDrug(
-          drug,
+          med.id,
           med.dose,
           med.frequency,
           med.time
@@ -49,27 +41,25 @@ export default class PrescriptionController {
         prescribedDrugs.push(prescribedDrug);
       }
       await queryRunner.manager.save(prescribedDrugs);
-
+      const patient = await UserModules.findUserByNid(patientId);
       const newPrescrition = await prescriptionModule.createPrescription({
-        doctor: doctor,
-        patient: patient,
+        doctor: doctorId,
+        patient: patient.id,
         prescribedDrug: prescribedDrugs,
         description: description,
       });
 
       await queryRunner.manager.save(newPrescrition);
-      res
-        .status(StatusCodes.CREATED)
-        .json({
-          message: ReasonPhrases.CREATED,
-          doctor,
-          patient,
-          newPrescrition,
-        });
       await queryRunner.commitTransaction();
+      res.status(StatusCodes.CREATED).json({
+        message: ReasonPhrases.CREATED,
+        newPrescrition,
+      });
     } catch (err) {
-      console.log(err);
       await queryRunner.rollbackTransaction();
+      if (handlePostgresError(err as DatabaseError, res)) {
+        return;
+      }
       next(err);
     } finally {
       await queryRunner.release();
