@@ -1,18 +1,14 @@
 import { Router } from 'express'
 import ReportsController from '../controllers/ReportsController'
+import Auth from '../middleware/middleware'
 
 const router = Router()
 
-router.post('/create', ReportsController.createReport)
+router.post('/create', Auth.checkToken,ReportsController.createReport)
 
-router.get('/all', ReportsController.fetchAll)
+// router.get('/patient/:patientId')
 
-router.put('/edit/:reportId', ReportsController.editReport)
+// router.get('/patient/:doctorId')
 
-router.get('/patient/:patientId')
-
-router.get('/patient/:doctorId')
-
-router.get('/:reportId', ReportsController.fetchSingleReport)
 
 export default router

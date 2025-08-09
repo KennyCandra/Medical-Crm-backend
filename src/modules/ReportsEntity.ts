@@ -25,7 +25,7 @@ export default class ReportsEntityModule {
     }
   }
 
-  static async fetchAllReportsforAdmin(): Promise<ReportsEntity[]> {
+  static async fetchAllReportsforowner(): Promise<ReportsEntity[]> {
     const fethedReports = await AppDataSource.getRepository(ReportsEntity)
       .createQueryBuilder("r")
       .leftJoinAndSelect("r.patient", "p")

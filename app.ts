@@ -10,22 +10,21 @@ import DiagnosisRoutes from "./src/routes/Diagnosis";
 import SpecializationRoutes from "./src/routes/Specializations";
 import PrescriptoinRoutes from "./src/routes/Prescription";
 import DrugRoutes from "./src/routes/Drug";
-import AnalyticsRoutes from "./src/routes/Analytics";
 import cookiesParser from "cookie-parser";
 import { GoogleGenAI } from "@google/genai";
 import DiseaseRoutes from "./src/routes/Disease";
 import AllergyRoutes from "./src/routes/Allergies";
 import ReportRouter from "./src/routes/ReportsController";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import AdminRoutes from "./src/routes/Admin";
+import Auth from "./src/middleware/middleware";
+import { AnalyticsController } from "./src/controllers/AnalyticsController";
 
 const app = express();
 app.use(express.json());
 app.use(cookiesParser());
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.FRONTED_URL
-];
+const allowedOrigins = ["http://localhost:5173", process.env.FRONTED_URL];
 
 app.use(
   cors({
@@ -46,10 +45,14 @@ app.use("/diagnosis", DiagnosisRoutes);
 app.use("/disease", DiseaseRoutes);
 app.use("/presc", PrescriptoinRoutes);
 app.use("/drug", DrugRoutes);
-app.use("/analytics", AnalyticsRoutes);
 app.use("/allergy", AllergyRoutes);
 app.use("/reports", ReportRouter);
+app.use("/admin", Auth.checkToken, Auth.checkRoles(["owner"]), AdminRoutes);
+app.get("/analytics/:diseaseId", AnalyticsController.specificDiseaseAnalytics);
 
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
 export const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });

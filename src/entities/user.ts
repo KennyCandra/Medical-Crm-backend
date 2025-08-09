@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne, OneToMany, ManyToOne } from "typeorm";
+import { Entity, Column, OneToOne, OneToMany, ManyToOne, Index } from "typeorm";
 import { DoctorProfile } from "./doctorProfile";
 import { Prescription } from "./prescription";
 import { Diagnosis } from "./diagnosis";
@@ -20,6 +20,7 @@ export class User extends DefaultDocument {
   gender: "male" | "female";
 
   @Column({ type: "varchar", length: 14, unique: true, nullable: false })
+  @Index("idx_nid_name_prefix", { synchronize: false })
   NID: string;
 
   @Column({ nullable: false })
@@ -33,7 +34,7 @@ export class User extends DefaultDocument {
     enum: ["doctor", "patient", "owner"],
     nullable: false,
   })
-  role: "doctor" | "patient" | "admin";
+  role: "doctor" | "patient" | "owner";
 
   @OneToOne(() => DoctorProfile, (profile) => profile.user, { nullable: true })
   doctorProfile?: DoctorProfile;
