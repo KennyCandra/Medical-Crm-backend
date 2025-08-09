@@ -1,12 +1,11 @@
 import express from 'express'
 const router = express.Router()
 import DrugController from '../controllers/DrugsController'
+import Auth from '../middleware/middleware'
 
-router.post('/', DrugController.fetchAllDrugs)
+router.post('/interaction', Auth.checkToken, Auth.checkRoles(['doctor']), DrugController.getInteractions)
 
-router.post('/interaction', DrugController.getInteractions)
-
-router.get('/search/:value', DrugController.searchDrug)
+router.get('/search/:value', Auth.checkToken, Auth.checkRoles(['doctor']), DrugController.searchDrug)
 
 
 export default router

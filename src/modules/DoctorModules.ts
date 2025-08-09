@@ -62,8 +62,17 @@ export default class DoctorProfileModules {
       const doctors = await AppDataSource.getRepository(DoctorProfile)
         .createQueryBuilder("doctor")
         .leftJoinAndSelect("doctor.user", "user")
+        .leftJoinAndSelect("doctor.specialization", "specialization")
+        .select([
+          "doctor.id AS id",
+          "doctor.medical_license_number AS medical_license_number",
+          "CONCAT(user.first_name, ' ', user.last_name) AS name",
+          "specialization.name AS specialization",
+          "user.NID AS NID",
+          "doctor.status AS status",
+        ])
         .where("doctor.status = :status", { status: "pending" })
-        .getMany();
+        .getRawMany();
       return doctors;
     } catch (err) {
       throw createHttpError.InternalServerError["internal server erro"];
@@ -74,7 +83,7 @@ export default class DoctorProfileModules {
     try {
       const approvedDoctors = [];
       for (const doctor of doctors) {
-        const doctorRepo = await AppDataSource.getRepository(
+      await AppDataSource.getRepository(
           DoctorProfile
         ).update(doctor.id, { status: doctor.status, reason: doctor.reason });
       }

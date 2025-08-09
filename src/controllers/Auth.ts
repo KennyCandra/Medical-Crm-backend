@@ -18,6 +18,7 @@ import path from "path";
 import fs from "fs";
 import RefreshTokenModule from "../modules/RefreshTokenModule";
 import { RefreshToken } from "../entities/refreshToken";
+import { handlePostgresError } from "../utils/postgresErrorHandler";
 
 const resend = new Resend(process.env.RESEND_API);
 
@@ -115,25 +116,7 @@ class AuthController {
 
       if (err.detail && typeof err.detail === "string") {
         const error: { field: string; message: string }[] = [];
-        console.log(err.detail);
-        if (err.detail.includes("email")) {
-          error.push({
-            field: "email",
-            message: "Email already exists",
-          });
-        }
-        if (err.detail.includes("NID")) {
-          error.push({
-            field: "nid",
-            message: "Nid already exists",
-          });
-        }
-        if (err.detail.includes("medical_license_number")) {
-          error.push({
-            field: "license",
-            message: "License already exists",
-          });
-        }
+        handlePostgresError(err, res);
         res.status(StatusCodes.CONFLICT).json({
           message: ReasonPhrases.CONFLICT,
           error: error,
@@ -409,7 +392,7 @@ class AuthController {
       const modifiedUsers = users.map((user) => ({
         id: user.id,
         fullName: user.first_name + " " + user.last_name,
-        nid: user.NID,
+        nid: user.nid,
       }));
 
       res

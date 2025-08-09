@@ -26,13 +26,18 @@ export default class DiseaseModule {
 
     static async fetchSpecificDiseases(searchTerm: string) {
         try {
-            const value = `%${searchTerm}%`;
             const diseases = await AppDataSource.getRepository(Disease)
-                .createQueryBuilder('d')
-                .where('d.name LIKE :value', { value })
-                .getMany();
+            .createQueryBuilder('d')
+             if(searchTerm.startsWith('*')) {
+                searchTerm = searchTerm.replace('*', '')
+                diseases.where('d.name LIKE :value', { value: `%${searchTerm}%` })
+             } else {
+                diseases.where('d.name LIKE :value', { value: `${searchTerm}%` })
+             }
 
-            return diseases
+            const diseasesResult = await diseases.getMany();
+
+            return diseasesResult
 
         } catch (err) {
             throw createHttpError.InternalServerError['internal server error']

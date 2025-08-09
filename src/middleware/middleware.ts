@@ -18,6 +18,7 @@ interface DecodedToken {
 class Auth {
     static async checkToken(req: Request, res: Response, next: NextFunction) {
         try {
+            console.log(req.body)
             const accessToken = req.get('Authorization');
             if (!accessToken) {
                 res.status(StatusCodes.UNAUTHORIZED).json({ message: ReasonPhrases.UNAUTHORIZED });
@@ -38,24 +39,6 @@ class Auth {
         } catch (error) {
             next(error);
         }
-    }
-
-    static async checkAdminRole(req: Request, res: Response, next: NextFunction) {
-        const { role } = req.body;
-        if (role !== "owner") {
-            res.status(StatusCodes.FORBIDDEN).json({ message: ReasonPhrases.FORBIDDEN });
-            return;
-        }
-        next();
-    }
-
-    static async checkDoctorRole(req: Request, res: Response, next: NextFunction) {
-        const { role } = req.body;
-        if (role !== "doctor") {
-            res.status(StatusCodes.FORBIDDEN).json({ message: ReasonPhrases.FORBIDDEN });
-            return;
-        }
-        next();
     }
 
     static checkRoles(allowedRoles: string[]) {

@@ -29,7 +29,9 @@ export class DoctorProfile extends DefaultDocument {
   @Column({ default: null, type: "varchar", nullable: true })
   reason: string;
 
-  @ManyToOne(() => Specialization, (specialization) => specialization.doctors)
+  @ManyToOne(() => Specialization, (specialization) => specialization.doctors, {
+    nullable: false,
+  })
   specialization: Specialization;
 
   @OneToOne(() => User, (user) => user.doctorProfile)

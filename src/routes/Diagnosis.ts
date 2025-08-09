@@ -5,11 +5,11 @@ import Auth from "../middleware/middleware";
 const router = Router() 
 
 
-router.post('/create', DiagnosisController.createDiagonsis)
+router.post('/create', Auth.checkToken, Auth.checkRoles(['doctor']), DiagnosisController.createDiagonsis)
 
-router.get('/:nid', DiagnosisController.fetchForPatient)
+router.get('/:nid', Auth.checkToken, DiagnosisController.fetchForPatient)
 
-router.delete('/remove/:id', Auth.checkToken, DiagnosisController.removeDiagnosis)
+router.delete('/remove/:id', Auth.checkToken, Auth.checkRoles(['doctor']), DiagnosisController.removeDiagnosis)
 
 
 

@@ -27,15 +27,6 @@ router.delete("/logout", AuthController.logOut);
 
 router.get("/search/:nid", AuthController.searchPatient);
 
-router.get(
-  "/doctor/pending",
-  Auth.checkToken,
-  Auth.checkAdminRole,
-  AuthController.fetchPendingDoctors
-);
-
-router.put('/doctor/pending', Auth.checkToken, Auth.checkAdminRole, AuthController.approveDoctor)
-
 router.get('/patient/:nid' , Auth.checkToken ,AuthController.fetchAllPatientData)
 
 router.get("/profile", Auth.checkToken, AuthController.fetchUser);

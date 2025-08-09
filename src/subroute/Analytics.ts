@@ -1,10 +1,9 @@
 import express from 'express'
 import { AnalyticsController } from '../controllers/AnalyticsController'
-import Auth from '../middleware/middleware'
 
 const router = express.Router()
 
-router.get('/diseases/:diseaseId', Auth.checkToken ,AnalyticsController.specificDiseaseAnalytics)
+router.get('/diseases/:diseaseId', AnalyticsController.specificDiseaseAnalytics)
 
 router.get('/disease', AnalyticsController.diseaseAnalytics)
 

@@ -45,7 +45,7 @@ export default class ReportsController {
   ): Promise<void> {
     try {
       // const { role } = req.body
-      const reports = await ReportsEntityModule.fetchAllReportsforAdmin();
+      const reports = await ReportsEntityModule.fetchAllReportsforowner();
 
       const finalResults = reports.map((report) => {
         return {

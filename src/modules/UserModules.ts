@@ -98,13 +98,17 @@ export default class UserModules {
     try {
       const users = await AppDataSource.getRepository(User)
         .createQueryBuilder("user")
-        .where("user.NID LIKE :nid", { nid: `%${nid}%` })
-        .andWhere("user.role = :role", { role: "patient" })
-        .getMany();
-        console.log(users)
+        .where("user.NID LIKE :nid", { nid: `${nid}%` })
+        .andWhere("user.role != :role", { role: "owner" })
+        .select([
+          "user.id AS id",
+          "user.NID AS NID",
+          "user.first_name AS first_name",
+          "user.last_name AS last_name",
+        ])
+        .getRawMany();
       return users;
     } catch (err) {
-      console.log(err);
       throw createHttpError(
         StatusCodes.INTERNAL_SERVER_ERROR,
         ReasonPhrases.INTERNAL_SERVER_ERROR

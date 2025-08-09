@@ -9,6 +9,34 @@ export interface DatabaseError extends Error {
   table?: string;
 }
 
+const possibleErrors = [
+  {
+    field: "doctor",
+    message: "Doctor not found",
+  },
+  {
+    field: "patient",
+    message: "Patient not found",
+  },
+
+  {
+    field: "drug",
+    message: "One or more drugs not found",
+  },
+  {
+    field: "email",
+    message: "Email already exists",
+  },
+  {
+    field: "NID",
+    message: "NID already exists",
+  },
+  {
+    field: "medical_license_number",
+    message: "License already exists",
+  },
+];
+
 export const handlePostgresError = (
   err: DatabaseError,
   res: Response
@@ -20,15 +48,14 @@ export const handlePostgresError = (
       const field = constraintMatch ? constraintMatch[1] : "reference";
 
       let message = "Invalid reference";
-      if (field.includes("doctor") || err.constraint?.includes("doctor")) {
-        message = "Doctor not found";
-      } else if (
-        field.includes("patient") ||
-        err.constraint?.includes("patient")
-      ) {
-        message = "Patient not found";
-      } else if (field.includes("drug") || err.constraint?.includes("drug")) {
-        message = "One or more drugs not found";
+      for (const error of possibleErrors) {
+        if (
+          field.includes(error.field) ||
+          err.constraint?.includes(error.field)
+        ) {
+          message = error.message;
+          break;
+        }
       }
 
       res.status(StatusCodes.BAD_REQUEST).json({
