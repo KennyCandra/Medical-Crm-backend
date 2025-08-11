@@ -14,6 +14,7 @@ import {
   DatabaseError,
   handlePostgresError,
 } from "../utils/postgresErrorHandler";
+import SocketManager from "../../socket";
 export default class PrescriptionController {
   static async createPrescription(
     req: Request,
@@ -56,6 +57,7 @@ export default class PrescriptionController {
         newPrescrition,
       });
     } catch (err) {
+      console.log(err);
       await queryRunner.rollbackTransaction();
       if (handlePostgresError(err as DatabaseError, res)) {
         return;

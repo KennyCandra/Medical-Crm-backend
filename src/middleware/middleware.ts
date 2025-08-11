@@ -18,7 +18,6 @@ interface DecodedToken {
 class Auth {
     static async checkToken(req: Request, res: Response, next: NextFunction) {
         try {
-            console.log(req.body)
             const accessToken = req.get('Authorization');
             if (!accessToken) {
                 res.status(StatusCodes.UNAUTHORIZED).json({ message: ReasonPhrases.UNAUTHORIZED });

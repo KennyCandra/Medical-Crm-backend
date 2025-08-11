@@ -19,10 +19,13 @@ import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import AdminRoutes from "./src/routes/Admin";
 import Auth from "./src/middleware/middleware";
 import { AnalyticsController } from "./src/controllers/AnalyticsController";
+import { createServer } from "http";
+import SocketManager from "./socket";
 
 const app = express();
 app.use(express.json());
 app.use(cookiesParser());
+const server = createServer(app);
 
 const allowedOrigins = ["http://localhost:5173", process.env.FRONTED_URL];
 
@@ -75,9 +78,13 @@ app.use(
     return;
   }
 );
+
+
+
 AppDataSource.initialize().then(() => {
   const port = Number(process.env.DB_PORT_SERVER);
-  app.listen(port, "0.0.0.0", () => {
+  server.listen(port, "0.0.0.0", () => {
     console.log("started our first server on port", port);
+    SocketManager.connect(server, allowedOrigins);
   });
 });

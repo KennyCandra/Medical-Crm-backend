@@ -4,6 +4,8 @@ import { AppDataSource } from "../../ormconfig";
 import UserModules from "../modules/UserModules";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import createHttpError from "http-errors";
+import SocketManager from "../../socket";
+
 export class DiagnosisController {
   static async createDiagonsis(
     req: Request,
@@ -11,9 +13,11 @@ export class DiagnosisController {
     next: NextFunction
   ) {
     try {
-      const { patientId, doctorId, diseaseId, severity , notes } = req.body;
+      const { patientId, doctorId, diseaseId, severity, notes } = req.body;
       const previousDiagnosis = await DiagnosisModule.findForPatient(patientId);
-      const diseaseIds = previousDiagnosis.map((diagnosis) => diagnosis.disease.id);
+      const diseaseIds = previousDiagnosis.map(
+        (diagnosis) => diagnosis.disease.id
+      );
       if (diseaseIds.includes(diseaseId)) {
         throw createHttpError.BadRequest("disease already exists");
       }
@@ -49,7 +53,7 @@ export class DiagnosisController {
 
       const patient = await UserModules.findUserByNid(nid);
       const diagnosis = await DiagnosisModule.findForPatient(patient);
-      console.log(diagnosis)
+      SocketManager.emitToUser(patient.id, "diagnosis", diagnosis);
 
       res.status(StatusCodes.OK).json({ diagnosis, message: ReasonPhrases.OK });
     } catch (err) {
