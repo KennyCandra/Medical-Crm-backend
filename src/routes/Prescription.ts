@@ -1,12 +1,12 @@
 import express from 'express'
 import PrescriptionController from '../controllers/PrescriptionController'
 import Auth from '../middleware/middleware'
-import { PrescriptionSchema } from '../Schemas/PrescriptionSchema'
-import ValidateSchema from '../Schemas/SchemaValidation'
+// import { PrescriptionSchema } from '../Schemas/PrescriptionSchema'
+// import ValidateSchema from '../Schemas/SchemaValidation'
 
 const router = express.Router()
 
-router.post('/create', Auth.checkToken, Auth.checkRoles(['doctor']), ValidateSchema(PrescriptionSchema), PrescriptionController.createPrescription)
+router.post('/create', Auth.checkToken, Auth.checkRoles(['doctor']),  PrescriptionController.createPrescription)
 
 router.put('/edit/:prescriptionId', Auth.checkToken, Auth.checkRoles(['doctor']), PrescriptionController.editPrescription)
 
