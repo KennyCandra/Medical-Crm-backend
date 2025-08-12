@@ -21,6 +21,7 @@ import Auth from "./src/middleware/middleware";
 import { AnalyticsController } from "./src/controllers/AnalyticsController";
 import { createServer } from "http";
 import SocketManager from "./socket";
+import NotificationRoutes from "./src/routes/NotificationRoutes";
 
 const app = express();
 app.use(express.json());
@@ -51,6 +52,7 @@ app.use("/drug", DrugRoutes);
 app.use("/allergy", AllergyRoutes);
 app.use("/reports", ReportRouter);
 app.use("/admin", Auth.checkToken, Auth.checkRoles(["owner"]), AdminRoutes);
+app.use("/notification", Auth.checkToken, NotificationRoutes);
 app.get("/analytics/:diseaseId", AnalyticsController.specificDiseaseAnalytics);
 
 app.get("/", (req, res) => {

@@ -26,10 +26,10 @@ export default class DiagnosisModule {
     }
   }
 
-  static async findForPatient(patient: User): Promise<Diagnosis[]> {
+  static async findForPatient(patient: string): Promise<Diagnosis[]> {
     try {
       const diagnoses = await AppDataSource.getRepository(Diagnosis).find({
-        where: { patient: { id: patient.id } },
+        where: { patient: { id: patient } },
         relations: ["disease"],
         order: {
           created_at: "ASC",

@@ -438,7 +438,7 @@ class AuthController {
         user.id
       );
       const allergies = await PallergyModule.findForPatient(user.id);
-      const diagnosis = await DiagnosisModule.findForPatient(user);
+      const diagnosis = await DiagnosisModule.findForPatient(user.id);
       const diagnoses = diagnosis.map((diag) => {
         return diag.disease.name;
       });
