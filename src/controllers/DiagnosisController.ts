@@ -5,6 +5,8 @@ import UserModules from "../modules/UserModules";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import createHttpError from "http-errors";
 import SocketManager from "../../socket";
+import NotificationModule from "../modules/NotificationModule";
+import DoctorModules from "../modules/DoctorModules";
 
 export class DiagnosisController {
   static async createDiagonsis(
@@ -14,7 +16,7 @@ export class DiagnosisController {
   ) {
     try {
       const { patientId, doctorId, diseaseId, severity, notes } = req.body;
-      const previousDiagnosis = await DiagnosisModule.findForPatient(patientId);
+      const previousDiagnosis = await DiagnosisModule.findForPatient(patientId as string);
       const diseaseIds = previousDiagnosis.map(
         (diagnosis) => diagnosis.disease.id
       );
@@ -28,7 +30,19 @@ export class DiagnosisController {
         severity,
         notes
       );
+      const patient = await UserModules.findUserById(patientId);
+      const doctor = await DoctorModules.findDoctor(doctorId);
       await AppDataSource.manager.save(diagnoses);
+      const newNotification = await NotificationModule.createNotification(
+        "New Diagnosis",
+        `New diagnosis added for ${patient.first_name} ${patient.last_name} by Dr: ${doctor.user.first_name} ${doctor.user.last_name}`,
+        diagnoses.id,
+        patientId,
+        'diagnosis',
+        'create'
+      );
+      await AppDataSource.manager.save(newNotification);
+      SocketManager.emitToUser(patientId, "createDiagnosis", newNotification);
 
       res
         .status(StatusCodes.CREATED)
@@ -52,7 +66,7 @@ export class DiagnosisController {
       }
 
       const patient = await UserModules.findUserByNid(nid);
-      const diagnosis = await DiagnosisModule.findForPatient(patient);
+      const diagnosis = await DiagnosisModule.findForPatient(patient.id);
       SocketManager.emitToUser(patient.id, "diagnosis", diagnosis);
 
       res.status(StatusCodes.OK).json({ diagnosis, message: ReasonPhrases.OK });

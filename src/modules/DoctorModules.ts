@@ -31,7 +31,10 @@ export default class DoctorProfileModules {
   static async findDoctor(id: string) {
     try {
       const doctorRepo = await AppDataSource.getRepository(DoctorProfile);
-      const doctor = await doctorRepo.findOneBy({ id: id });
+      const doctor = await doctorRepo.findOne({
+        where: { id: id },
+        relations: ["user"],
+      });
 
       if (!doctor) {
         throw createHttpError.NotFound["doctor id is wrong"];
@@ -61,6 +64,7 @@ export default class DoctorProfileModules {
     try {
       const doctors = await AppDataSource.getRepository(DoctorProfile)
         .createQueryBuilder("doctor")
+        .where("doctor.status = :status", { status: "pending" })
         .leftJoinAndSelect("doctor.user", "user")
         .leftJoinAndSelect("doctor.specialization", "specialization")
         .select([
@@ -71,7 +75,6 @@ export default class DoctorProfileModules {
           "user.NID AS NID",
           "doctor.status AS status",
         ])
-        .where("doctor.status = :status", { status: "pending" })
         .getRawMany();
       return doctors;
     } catch (err) {

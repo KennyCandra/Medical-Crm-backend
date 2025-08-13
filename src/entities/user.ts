@@ -7,6 +7,7 @@ import { ReportsEntity } from "./ReportsEntity";
 import { PasswordResetToken } from "./resetPw";
 import { DefaultDocument } from "./NormalDocument";
 import { RefreshToken } from "./refreshToken";
+import { Notification } from "./Notification";
 
 @Entity()
 export class User extends DefaultDocument {
@@ -76,4 +77,7 @@ export class User extends DefaultDocument {
 
   @OneToMany(() => RefreshToken, (token) => token.user)
   refreshTokens: RefreshToken[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 }
