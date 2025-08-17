@@ -26,7 +26,7 @@ class AiPrompts {
             content: content,
           },
         ],
-        model: "deepseek-r1-distill-llama-70b",
+        model: process.env.GROQ_MODEL,
         temperature: 0.1,
         max_tokens: 2048,
       });
@@ -73,12 +73,6 @@ class AiPrompts {
     );
 
 
-    const promptTextForDrugInteraction = path.join(__dirname, "..", "ai-prompts", "prompt2.txt");
-    fs.writeFileSync(promptTextForDrugInteraction, newTextForDrugInteraction as string);
-
-    const responseTextForDrugInteraction = path.join(__dirname, "..", "ai-prompts", "response2.txt");
-    fs.writeFileSync(responseTextForDrugInteraction, analysisText as string);
-
     const json = extractJsonFromString(analysisText);
     const parsedTextOldDrugInterActionAndAllergies = JSON.parse(json);
     return parsedTextOldDrugInterActionAndAllergies;
@@ -98,12 +92,6 @@ class AiPrompts {
     const analysisTextForDrugInteraction = await this.callOpenRouterAPI(
       newTextForDrugInteractions
     );
-
-    const promptTextForDrugInteraction = path.join(__dirname, "..", "ai-prompts", "prompt1.txt");
-    fs.writeFileSync(promptTextForDrugInteraction, newTextForDrugInteractions as string);
-
-    const responseTextForDrugInteraction = path.join(__dirname, "..", "ai-prompts", "response1.txt");
-    fs.writeFileSync(responseTextForDrugInteraction, analysisTextForDrugInteraction as string);
 
     const text = extractJsonFromString(analysisTextForDrugInteraction);
 

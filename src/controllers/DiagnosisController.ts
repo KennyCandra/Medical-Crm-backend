@@ -89,7 +89,7 @@ export class DiagnosisController {
   ) {
     try {
       const { id } = req.params;
-      const result = runInTransaction(async (manager) => {
+      const result = await runInTransaction(async (manager) => {
         const data = await DiagnosisModule.removeDiagnosis(id);
         const newNotification = await NotificationModule.createNotification(
           "Removed Diagnosis",
