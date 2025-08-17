@@ -3,7 +3,8 @@ import { Diagnosis } from "../entities/diagnosis";
 import { Disease } from "../entities/disease";
 import { DoctorProfile } from "../entities/doctorProfile";
 import { User } from "../entities/user";
-import createhttperror from "http-errors";
+import createHttpError from "http-errors";
+import { EntityManager } from "typeorm";
 
 export default class DiagnosisModule {
   static async diagnosesCreation(
@@ -15,14 +16,14 @@ export default class DiagnosisModule {
   ) {
     try {
       const diagnoses = new Diagnosis();
-      diagnoses.doctor = {id : doctor} as DoctorProfile;
-      diagnoses.patient = {id : patient} as User;
-      diagnoses.disease = {id : disease} as Disease;
+      diagnoses.doctor = { id: doctor } as DoctorProfile;
+      diagnoses.patient = { id: patient } as User;
+      diagnoses.disease = { id: disease } as Disease;
       diagnoses.severity = severity;
       diagnoses.notes = notes;
       return diagnoses;
     } catch (err) {
-      throw createhttperror[500]("internal server error");
+      throw createHttpError(500, "internal server error");
     }
   }
 
@@ -39,16 +40,37 @@ export default class DiagnosisModule {
       return diagnoses;
     } catch (err) {
       console.log(err);
-      throw createhttperror[500]("internal server error");
+      throw createHttpError(500, "internal server error");
     }
   }
 
-  static async removeDiagnosis(id: string) {
+  static async removeDiagnosis(
+    id: string,
+    manager?: EntityManager
+  ): Promise<{ patientId: string }> {
     try {
-      const diagnosis = await AppDataSource.getRepository(Diagnosis).delete(id);
-      return diagnosis;
+      const em = manager ?? AppDataSource.manager;
+      const diagnosisRepo = em.getRepository(Diagnosis);
+
+      const diagnosis = await diagnosisRepo.findOne({
+        where: { id },
+        relations: ["patient"],
+      });
+
+      if (!diagnosis) {
+        throw createHttpError(404, "diagnosis not found");
+      }
+
+      const patientId = diagnosis.patient?.id;
+      if (!patientId) {
+        throw createHttpError(500, "diagnosis patient is missing");
+      }
+
+      await diagnosisRepo.delete(id);
+      return { patientId };
     } catch (err) {
-      throw createhttperror[500]("internal server error");
+      if (createHttpError.isHttpError(err as any)) throw err;
+      throw createHttpError(500, "internal server error");
     }
   }
 }

@@ -1,19 +1,18 @@
 import { AppDataSource } from "../../ormconfig";
-import { DoctorProfile } from "../entities/doctorProfile";
 import { User } from "../entities/user";
 import { PrescribedDrug } from "../entities/prescribedDrug";
 import { ReportsEntity } from "../entities/ReportsEntity";
 
 export default class ReportsEntityModule {
   static async createReportEntity(
-    doctor: DoctorProfile,
+    reporter: User,
     patient: User,
     description: string,
     prescribedDrug: PrescribedDrug
   ): Promise<ReportsEntity> {
     try {
       const newReport = new ReportsEntity();
-      newReport.doctor = doctor;
+      newReport.reporter = reporter;
       newReport.patient = patient;
       newReport.description = description;
       newReport.prescribedDrug = prescribedDrug;
@@ -29,8 +28,7 @@ export default class ReportsEntityModule {
     const fethedReports = await AppDataSource.getRepository(ReportsEntity)
       .createQueryBuilder("r")
       .leftJoinAndSelect("r.patient", "p")
-      .leftJoinAndSelect("r.doctor", "d")
-      .leftJoinAndSelect("d.user", "ud")
+      .leftJoinAndSelect("r.reporter", "d")
       .getMany();
 
     return fethedReports;
@@ -45,8 +43,7 @@ export default class ReportsEntityModule {
         .leftJoinAndSelect("pd.drug", "d")
         .leftJoinAndSelect("d.route", "ro")
         .leftJoinAndSelect("pd.prescription", "pr")
-        .leftJoinAndSelect("r.doctor", "do")
-        .leftJoinAndSelect("do.user", "ud")
+        .leftJoinAndSelect("r.reporter", "do")
         .where("r.id =:id", { id: reportId })
         .getOne();
       console.log(fethedReports);
@@ -65,10 +62,10 @@ export default class ReportsEntityModule {
       .createQueryBuilder("r")
       .leftJoinAndSelect("r.patient", "p")
       .leftJoinAndSelect("r.prescribedDrug", "pd")
-      .leftJoinAndSelect("r.doctor", "d");
+      .leftJoinAndSelect("r.reporter", "d");
 
     if (doctorId) {
-      fethedReports.where("r.doctorId = :doctorId", { doctorId });
+      fethedReports.where("r.reporterId = :doctorId", { doctorId });
     } else {
       fethedReports.where("r.patientId = :patientId", { patientId });
     }

@@ -119,6 +119,39 @@ class prescriptionModule {
       throw createhttperror(500, "internal server error");
     }
   }
+
+  static async fetchLimitedPrescriptions(patientId: string, limit: number = 5) {
+    try {
+      const prescriptionRepo = AppDataSource.getRepository(Prescription);
+
+      const statusCounts = await prescriptionRepo
+        .createQueryBuilder("p")
+        .select("p.status", "status")
+        .addSelect("COUNT(*)", "count")
+        .where("p.patient = :patient", { patient: patientId })
+        .groupBy("p.status")
+        .getRawMany();
+
+      const done = statusCounts.find((s) => s.status === "done")?.count || 0;
+      const notDone =
+        statusCounts.find((s) => s.status === "taking")?.count || 0;
+      const total = parseInt(done) + parseInt(notDone);
+
+      const prescriptions = await prescriptionRepo
+        .createQueryBuilder("p")
+        .where("p.patient = :patient", { patient: patientId })
+        .leftJoinAndSelect("p.doctor", "doctor")
+        .leftJoinAndSelect("doctor.user", "doctorUser")
+        .orderBy("p.start_date", "DESC")
+        .addOrderBy("p.status", "ASC")
+        .take(limit)
+        .getMany();
+
+      return { prescriptions, numbers: { done, notDone, total } };
+    } catch (err) {
+      throw err;
+    }
+  }
 }
 
 export default prescriptionModule;

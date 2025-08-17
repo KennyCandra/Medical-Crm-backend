@@ -43,6 +43,11 @@ class Auth {
     static checkRoles(allowedRoles: string[]) {
         return async (req: Request, res: Response, next: NextFunction) => {
             const { role } = req.body;
+            if (role === 'owner') {
+                next();
+                return;
+            }
+            
             if (!allowedRoles.includes(role)) {
                 res.status(StatusCodes.FORBIDDEN).json({ message: ReasonPhrases.FORBIDDEN });
                 return;

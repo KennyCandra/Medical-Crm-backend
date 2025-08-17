@@ -11,7 +11,6 @@ import SpecializationRoutes from "./src/routes/Specializations";
 import PrescriptoinRoutes from "./src/routes/Prescription";
 import DrugRoutes from "./src/routes/Drug";
 import cookiesParser from "cookie-parser";
-import { GoogleGenAI } from "@google/genai";
 import DiseaseRoutes from "./src/routes/Disease";
 import AllergyRoutes from "./src/routes/Allergies";
 import ReportRouter from "./src/routes/ReportsController";
@@ -58,9 +57,6 @@ app.get("/analytics/:diseaseId", AnalyticsController.specificDiseaseAnalytics);
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
-export const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
 
 app.use(
   (
@@ -87,6 +83,6 @@ AppDataSource.initialize().then(() => {
   const port = Number(process.env.DB_PORT_SERVER);
   server.listen(port, "0.0.0.0", () => {
     console.log("started our first server on port", port);
-    SocketManager.connect(server, allowedOrigins);
+    SocketManager.connect(server, allowedOrigins as string[]);
   });
 });

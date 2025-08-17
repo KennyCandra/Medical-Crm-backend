@@ -115,4 +115,25 @@ export default class UserModules {
       );
     }
   }
+
+
+  static async fetchAllUserDataWithNid(nid: string) {
+    try {
+      const user = await AppDataSource.getRepository(User)
+        .createQueryBuilder("user")
+        .where("user.NID = :nid", { nid })
+        .leftJoinAndSelect("user.patientDiagnoses", "diagnoses")
+        .leftJoinAndSelect("diagnoses.disease", "disease")
+        .leftJoinAndSelect("user.patientAllergies", "allergies")
+        .leftJoinAndSelect("allergies.allergy", "allergy")
+        .getOne();
+      return user;
+    }
+    catch (err) {
+      throw createHttpError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        ReasonPhrases.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
 }

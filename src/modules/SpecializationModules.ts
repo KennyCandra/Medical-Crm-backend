@@ -6,7 +6,9 @@ import createHttpError from 'http-errors'
 export class SpecializationModules {
 
     static async isValid(specialityId: string) {
-        const specialization = await AppDataSource.getRepository(Specialization).findOneBy({ id: specialityId })
+        const specialization = await AppDataSource.getRepository(Specialization).createQueryBuilder('s')
+        .where('s.id = :id', { id: specialityId })
+        .getOne();
 
         if (specialization) {
             return { specializationId: specialization, isValidSpecialization: true }

@@ -1,5 +1,4 @@
 import { Column, Entity, JoinColumn, ManyToOne,PrimaryGeneratedColumn } from "typeorm";
-import { DoctorProfile } from "./doctorProfile";
 import { PrescribedDrug } from "./prescribedDrug";
 import { User } from "./user";
 import { DefaultDocument } from "./NormalDocument";
@@ -13,9 +12,9 @@ export class ReportsEntity extends DefaultDocument {
     @JoinColumn()
     patient: User;
 
-    @ManyToOne(() => DoctorProfile, doctor => doctor.reports)
+    @ManyToOne(() => User, reporter => reporter.reportedBy)
     @JoinColumn()
-    doctor: DoctorProfile;
+    reporter: User;
 
     @ManyToOne(() => PrescribedDrug, drug => drug.reports)
     @JoinColumn()

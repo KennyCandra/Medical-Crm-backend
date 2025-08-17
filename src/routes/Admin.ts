@@ -9,6 +9,6 @@ router.use('/analytics', AnalyticsRoutes)
 
 router.use('/auth', Auth)
 
-router.use('/report', Report)
+router.use('/reports', Report)
 
 export default router;
