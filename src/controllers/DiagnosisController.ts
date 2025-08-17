@@ -7,6 +7,7 @@ import createHttpError from "http-errors";
 import SocketManager from "../../socket";
 import NotificationModule from "../modules/NotificationModule";
 import DoctorModules from "../modules/DoctorModules";
+import { runInTransaction } from "../utils/TransactionalHelper";
 
 export class DiagnosisController {
   static async createDiagonsis(
@@ -16,37 +17,42 @@ export class DiagnosisController {
   ) {
     try {
       const { patientId, doctorId, diseaseId, severity, notes } = req.body;
-      const previousDiagnosis = await DiagnosisModule.findForPatient(patientId as string);
-      const diseaseIds = previousDiagnosis.map(
-        (diagnosis) => diagnosis.disease.id
-      );
-      if (diseaseIds.includes(diseaseId)) {
-        throw createHttpError.BadRequest("disease already exists");
-      }
-      const diagnoses = await DiagnosisModule.diagnosesCreation(
-        patientId,
-        doctorId,
-        diseaseId,
-        severity,
-        notes
-      );
-      const patient = await UserModules.findUserById(patientId);
-      const doctor = await DoctorModules.findDoctor(doctorId);
-      await AppDataSource.manager.save(diagnoses);
-      const newNotification = await NotificationModule.createNotification(
-        "New Diagnosis",
-        `New diagnosis added for ${patient.first_name} ${patient.last_name} by Dr: ${doctor.user.first_name} ${doctor.user.last_name}`,
-        diagnoses.id,
-        patientId,
-        'diagnosis',
-        'create'
-      );
-      await AppDataSource.manager.save(newNotification);
-      SocketManager.emitToUser(patientId, "createDiagnosis", newNotification);
+      const result = await runInTransaction(async (manager) => {
+        const [previousDiagnosis, patient, doctor] = await Promise.all([
+          DiagnosisModule.findForPatient(patientId as string),
+          UserModules.findUserById(patientId as string),
+          DoctorModules.findDoctor(doctorId as string),
+        ]);
+        const diseaseIds = previousDiagnosis.map(
+          (diagnosis) => diagnosis.disease.id
+        );
+        if (diseaseIds.includes(diseaseId)) {
+          throw createHttpError.BadRequest("disease already exists");
+        }
+        const diagnoses = await DiagnosisModule.diagnosesCreation(
+          patientId,
+          doctorId,
+          diseaseId,
+          severity,
+          notes
+        );
+        await manager.save(diagnoses);
+        const newNotification = await NotificationModule.createNotification(
+          "New Diagnosis",
+          `New diagnosis added for ${patient.first_name} ${patient.last_name} by Dr: ${doctor.user.first_name} ${doctor.user.last_name}`,
+          diagnoses.id,
+          patientId,
+          "diagnosis",
+          "create"
+        );
+        await manager.save(newNotification);
+        SocketManager.emitToUser(patientId, "notification", newNotification);
+        return diagnoses;
+      });
 
       res
         .status(StatusCodes.CREATED)
-        .json({ diagnoses, message: ReasonPhrases.CREATED });
+        .json({ diagnoses: result, message: ReasonPhrases.CREATED });
     } catch (err) {
       console.log(err);
       next(err);
@@ -83,8 +89,25 @@ export class DiagnosisController {
   ) {
     try {
       const { id } = req.params;
-      await DiagnosisModule.removeDiagnosis(id);
-      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
+      const result = runInTransaction(async (manager) => {
+        const data = await DiagnosisModule.removeDiagnosis(id);
+        const newNotification = await NotificationModule.createNotification(
+          "Removed Diagnosis",
+          `New diagnosis removed from you`,
+          null,
+          data.patientId,
+          "diagnosis",
+          "delete"
+        );
+        await manager.save(newNotification);
+        SocketManager.emitToUser(
+          data.patientId,
+          "notification",
+          newNotification
+        );
+        return data;
+      });
+      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, result });
     } catch (err) {
       console.error(err);
       next(err);

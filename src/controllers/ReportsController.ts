@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import ReportsEntityModule from "../modules/ReportsEntity";
-import DoctorProfileModules from "../modules/DoctorModules";
 import createhttperror from "http-errors";
 import { AppDataSource } from "../../ormconfig";
 import UserModules from "../modules/UserModules";
@@ -14,16 +13,24 @@ export default class ReportsController {
   ): Promise<void> {
     try {
       const { patientId, prescribedDrugId, doctorId, description } = req.body;
-      const [doctor, user] = await Promise.all([
-        DoctorProfileModules.findDoctor(doctorId),
+      console.log(doctorId);
+      const [reporter, user] = await Promise.all([
+        UserModules.findUserById(doctorId),
         UserModules.findUserById(patientId),
       ]);
-      if (!doctor) {
+
+      if (!reporter) {
+        console.log("reporter not found");
+        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+      }
+
+      if (!user) {
+        console.log("user not found");
         throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
       }
 
       const newReport = await ReportsEntityModule.createReportEntity(
-        doctor,
+        reporter,
         user,
         description,
         prescribedDrugId
@@ -44,13 +51,12 @@ export default class ReportsController {
     next: NextFunction
   ): Promise<void> {
     try {
-      // const { role } = req.body
       const reports = await ReportsEntityModule.fetchAllReportsforowner();
 
       const finalResults = reports.map((report) => {
         return {
-          doctorName:
-            report.doctor.user.first_name + " " + report.doctor.user.last_name,
+          reporterName:
+            report.reporter.first_name + " " + report.reporter.last_name,
           patientName:
             report.patient.first_name + " " + report.patient.last_name,
           reviewed: report.reviewed,
@@ -77,8 +83,8 @@ export default class ReportsController {
       const singleReport = {
         id: report.id,
         drugName: report.prescribedDrug.drug.name,
-        doctorName:
-          report.doctor.user.first_name + " " + report.doctor.user.last_name,
+        reporterName:
+          report.reporter.first_name + " " + report.reporter.last_name,
         patientId: report.patient.NID,
         patientName: report.patient.first_name + " " + report.patient.last_name,
         description: report.description,

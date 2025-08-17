@@ -13,128 +13,83 @@ import PasswordResetTokenModules from "../modules/PasswordResetTokenModules";
 import PrescriptionModule from "../modules/PrescriptionModule";
 import PallergyModule from "../modules/PallergyModule";
 import DiagnosisModule from "../modules/DiagnosisModule";
-import { Resend } from "resend";
-import path from "path";
-import fs from "fs";
 import RefreshTokenModule from "../modules/RefreshTokenModule";
 import { RefreshToken } from "../entities/refreshToken";
 import { handlePostgresError } from "../utils/postgresErrorHandler";
-
-const resend = new Resend(process.env.RESEND_API);
-
-resend.domains.create({
-  name: "medical-crm-backend-production-8b4b.up.railway.app",
-  customReturnPath: "send",
-});
+import { runInTransaction } from "../utils/TransactionalHelper";
+import { userWithoutImportantData } from "../helpers/UserWithoutImportantData";
+import { CreateAuthenticationToken } from "../helpers/AuthTokens";
+import { Prescription } from "../entities/prescription";
 
 class AuthController {
   static async SignUp(req: Request, res: Response, next: NextFunction) {
-    const queryRunner = AppDataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const {
-        firstName,
-        lastName,
-        gender,
-        nid,
-        password,
-        role,
-        birth_date,
-        blood_type,
-        email,
-      } = req.body;
-
-      const newUser = await UserModules.createUser(
-        firstName,
-        lastName,
-        gender,
-        nid,
-        role,
-        password,
-        email,
-        birth_date,
-        blood_type
-      );
-
-      await queryRunner.manager.save(newUser);
-
-      if (role === "doctor") {
-        const specializationEntity = await SpecializationModules.isValid(
-          req.body.speciality
-        );
-        const doctor = await DoctorProfileModules.createDoctor({
-          user: newUser,
-          license: req.body.license,
-          specialization: specializationEntity.specializationId,
-        });
-
-        await queryRunner.manager.save(doctor);
-      }
-
-      newUser.password = undefined;
-      newUser.created_at = undefined;
-      newUser.updated_at = undefined;
-      newUser.id = undefined;
-
-      let message = fs.readFileSync(
-        path.join(__dirname, "../StaticFiles/message.html"),
-        "utf8"
-      );
-      const logo = fs.readFileSync(
-        path.join(__dirname, "../images/logo.png"),
-        "base64"
-      );
-      message = message
-        .replace("${email}", email)
-        .replace("${nid}", nid)
-        .replace("${logo}", logo);
-
-      await queryRunner.commitTransaction();
+    await runInTransaction(async (manager) => {
       try {
-        const { data, error } = await resend.emails.send({
-          from: "Acme <onboarding@resend.dev>",
-          to: email,
-          subject: "Welcome to our platform!",
-          html: message,
-        });
-        console.error(
-          "Error occurred while sending the email:",
-          error?.message || error
+        const {
+          firstName,
+          lastName,
+          gender,
+          nid,
+          password,
+          role,
+          birth_date,
+          blood_type,
+          email,
+        } = req.body;
+
+        let newUser = await UserModules.createUser(
+          firstName,
+          lastName,
+          gender,
+          nid,
+          role,
+          password,
+          email,
+          birth_date,
+          blood_type
         );
-        console.log(data);
-      } catch (emailError) {
-        console.error("Failed to send welcome email:", emailError);
+
+        await manager.save(newUser);
+
+        if (role === "doctor") {
+          const specializationEntity = await SpecializationModules.isValid(
+            req.body.speciality
+          );
+          if (!specializationEntity.isValidSpecialization) {
+            throw createHttpError(StatusCodes.BAD_REQUEST, {
+              field: "speciality",
+              message: "Invalid specialization",
+            });
+          }
+          const doctor = await DoctorProfileModules.createDoctor({
+            user: newUser,
+            license: req.body.license,
+            specialization: specializationEntity.specializationId,
+          });
+
+          await manager.save(doctor);
+        }
+
+        newUser = userWithoutImportantData(newUser);
+
+        res
+          .status(StatusCodes.CREATED)
+          .json({ message: ReasonPhrases.CREATED, newUser });
+      } catch (err: any) {
+        if (err.detail && typeof err.detail === "string") {
+          handlePostgresError(err, res);
+          return;
+        } else {
+          next(err);
+        }
       }
-
-      res
-        .status(StatusCodes.CREATED)
-        .json({ message: ReasonPhrases.CREATED, newUser });
-    } catch (err: any) {
-      await queryRunner.rollbackTransaction();
-
-      if (err.detail && typeof err.detail === "string") {
-        const error: { field: string; message: string }[] = [];
-        handlePostgresError(err, res);
-        res.status(StatusCodes.CONFLICT).json({
-          message: ReasonPhrases.CONFLICT,
-          error: error,
-        });
-        return;
-      }
-
-      console.error("Signup error:", err);
-      next(err);
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
 
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { nid, password } = req.body;
-      const user = await UserModules.findUserByNid(nid);
+      let user = await UserModules.findUserByNid(nid);
 
       if (!user) {
         res.status(StatusCodes.NOT_FOUND).json({
@@ -163,16 +118,12 @@ class AuthController {
         return;
       }
 
-      const accessToken = createToken(
-        { userId: user.id, role: user.role },
-        "15m"
-      );
+      const { accessToken, refreshToken } = CreateAuthenticationToken(user);
 
-      const refreshToken = createToken({ userId: user.id }, "60d");
-      const refreshTokenSignature = refreshToken.split(".")[2];
+      const refreshTokenSnippet = refreshToken.split(".")[2];
       const refreshTokenEntity = await RefreshTokenModule.createRefreshToken(
         user,
-        refreshTokenSignature
+        refreshTokenSnippet
       );
       await AppDataSource.manager.save(refreshTokenEntity);
 
@@ -183,16 +134,89 @@ class AuthController {
         path: "/",
         maxAge: 60 * 60 * 24 * 60 * 1000,
       });
-      user.password = undefined;
-      user.created_at = undefined;
-      user.updated_at = undefined;
-
+      user = userWithoutImportantData(user);
       res
         .status(StatusCodes.OK)
         .json({ message: ReasonPhrases.OK, accessToken, user });
     } catch (err) {
       next(err);
     }
+  }
+
+  static async refreshToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    await runInTransaction(async (manager) => {
+      try {
+        const refreshToken = req.cookies["refreshToken"];
+        if (!refreshToken) {
+          res.status(StatusCodes.UNAUTHORIZED).json({
+            message: "the refreshToken is not found",
+          });
+          return;
+        }
+
+        const token = await verifyToken(refreshToken);
+
+        if (token.expired) {
+          res.status(StatusCodes.UNAUTHORIZED).json({
+            message: "the refreshToken is expired",
+          });
+          return;
+        }
+        const refreshTokenSignature = refreshToken.split(".")[2];
+        const refreshTokenEntity = await RefreshTokenModule.findRefreshToken(
+          refreshTokenSignature
+        );
+        if (!refreshTokenEntity) {
+          res.status(StatusCodes.UNAUTHORIZED).json({
+            message: "the refreshToken is not found",
+          });
+          return;
+        }
+        if (refreshTokenEntity.expiresAt < new Date()) {
+          res.status(StatusCodes.UNAUTHORIZED).json({
+            message: "the refreshToken is expired",
+          });
+          return;
+        }
+
+        let user = refreshTokenEntity.user;
+        user = userWithoutImportantData(user);
+
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+          CreateAuthenticationToken(user);
+
+        const newRefreshTokenSignature = newRefreshToken.split(".")[2];
+        const newRefreshTokenEntity =
+          await RefreshTokenModule.createRefreshToken(
+            user,
+            newRefreshTokenSignature
+          );
+        await manager.delete(RefreshToken, {
+          tokenSignature: refreshTokenSignature,
+        });
+        await manager.save(newRefreshTokenEntity);
+
+        res.cookie("refreshToken", newRefreshToken, {
+          secure: true,
+          sameSite: "none",
+          httpOnly: true,
+          path: "/",
+          maxAge: 60 * 60 * 24 * 60 * 1000,
+        });
+        res.status(StatusCodes.OK).json({
+          message: ReasonPhrases.OK,
+          accessToken: newAccessToken,
+          user,
+        });
+      } catch (err) {
+        console.log(err);
+        next(err);
+      }
+    });
   }
 
   static async forgetPassword(
@@ -218,27 +242,7 @@ class AuthController {
       }
       const token = await PasswordResetTokenModules.createToken(user);
       await AppDataSource.manager.save(token);
-      const resetPasswordLink = `${process.env.FRONTEND_URL}/reset-password?token=${token.token}`;
-      const logo = fs.readFileSync(
-        path.join(__dirname, "../images/logo.png"),
-        "base64"
-      );
-      let message = fs
-        .readFileSync(
-          path.join(__dirname, "../StaticFiles/reset-password.html"),
-          "utf8"
-        )
-        .replace("${email}", user.email)
-        .replace("${logo}", logo)
-        .replace("${resetPasswordLink}", resetPasswordLink);
-      const { data, error } = await resend.emails.send({
-        from: "Acme <onboarding@resend.dev>",
-        to: user.email,
-        subject: "Reset Password",
-        html: message,
-      });
-      console.log(error);
-      console.log(data);
+
       res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
     } catch (err) {
       next(err);
@@ -252,7 +256,6 @@ class AuthController {
   ): Promise<void> {
     try {
       const { token, password } = req.body;
-      console.log(token, password);
       const tokenEntity = await PasswordResetTokenModules.verifyToken(token);
       if (!tokenEntity) {
         throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
@@ -266,95 +269,6 @@ class AuthController {
       res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
     } catch (err) {
       next(err);
-    }
-  }
-
-  static async refreshToken(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    const queryRunner = AppDataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const refreshToken = req.cookies["refreshToken"];
-
-      if (!refreshToken) {
-        throw createHttpError(
-          StatusCodes.UNAUTHORIZED,
-          ReasonPhrases.UNAUTHORIZED
-        );
-      }
-
-      const token = await verifyToken(refreshToken);
-      if (token.expired) {
-        throw createHttpError(
-          StatusCodes.UNAUTHORIZED,
-          ReasonPhrases.UNAUTHORIZED
-        );
-      }
-      const refreshTokenSignature = refreshToken.split(".")[2];
-      const refreshTokenEntity = await RefreshTokenModule.findRefreshToken(
-        refreshTokenSignature
-      );
-      if (!refreshTokenEntity) {
-        throw createHttpError(
-          StatusCodes.UNAUTHORIZED,
-          ReasonPhrases.UNAUTHORIZED
-        );
-      }
-      if (refreshTokenEntity.expiresAt < new Date()) {
-        throw createHttpError(
-          StatusCodes.UNAUTHORIZED,
-          ReasonPhrases.UNAUTHORIZED
-        );
-      }
-
-      const user = refreshTokenEntity.user;
-
-      const accessToken = createToken(
-        {
-          userId: user.id,
-          name: user.first_name + " " + user.last_name,
-          role: user.role,
-        },
-        "15m"
-      );
-
-      const newRefreshToken = createToken({ userId: user.id }, "60d");
-      const newRefreshTokenSignature = newRefreshToken.split(".")[2];
-      const newRefreshTokenEntity = await RefreshTokenModule.createRefreshToken(
-        user,
-        newRefreshTokenSignature
-      );
-      await queryRunner.manager.delete(RefreshToken, {
-        tokenSignature: refreshTokenSignature,
-      });
-      await queryRunner.manager.save(newRefreshTokenEntity);
-      await queryRunner.commitTransaction();
-
-      res.cookie("refreshToken", newRefreshToken, {
-        secure: true,
-        sameSite: "none",
-        httpOnly: true,
-        path: "/",
-        maxAge: 60 * 60 * 24 * 60 * 1000,
-      });
-
-      user.password = undefined;
-      user.created_at = undefined;
-      user.updated_at = undefined;
-
-      res
-        .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, accessToken, user });
-    } catch (err) {
-      console.log(err);
-      await queryRunner.rollbackTransaction();
-      next(err);
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -389,29 +303,22 @@ class AuthController {
       const { nid } = req.params;
       const users = await UserModules.searchUsersByNid(nid);
 
-      const modifiedUsers = users.map((user) => ({
-        id: user.id,
-        fullName: user.first_name + " " + user.last_name,
-        nid: user.nid,
-      }));
+      const modifiedUsers = users.map(
+        (user: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          nid: string;
+        }) => ({
+          id: user.id,
+          fullName: user.first_name + " " + user.last_name,
+          nid: user.nid,
+        })
+      );
 
       res
         .status(StatusCodes.OK)
         .json({ message: ReasonPhrases.OK, users: modifiedUsers });
-    } catch (err) {
-      console.log(err);
-      next(err);
-    }
-  }
-
-  static async fetchUser(req: Request, res: Response, next: NextFunction) {
-    try {
-      const user = await AppDataSource.getRepository(User)
-        .createQueryBuilder("user")
-        .where("user.id = :id", { id: req.body.userId })
-        .getOne();
-
-      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, user });
     } catch (err) {
       console.log(err);
       next(err);
@@ -424,28 +331,58 @@ class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { role } = req.body;
-      if (role === "patient") {
-        res
-          .status(StatusCodes.FORBIDDEN)
-          .json({ message: ReasonPhrases.FORBIDDEN });
-        return;
-      }
       const { nid } = req.params;
-      const user = await UserModules.findUserByNid(nid);
-      const prescriptions = await PrescriptionModule.findManyPrescriptions(
-        null,
-        user.id
+      let user = await UserModules.fetchAllUserDataWithNid(nid);
+      const {prescriptions , numbers} = await PrescriptionModule.fetchLimitedPrescriptions(user.id);
+
+      user = userWithoutImportantData(user);
+
+      console.log(prescriptions);
+
+      let modifiedPrescriptions = prescriptions.map((presc => {
+        return {
+          id: presc.id,
+          status: presc.status,
+          doctor: presc.doctor.user.first_name + " " + presc.doctor.user.last_name,
+          date: presc.start_date,
+        }
+      }))
+
+      const modifiedPrescriptionsToResponse = {
+        prescriptions: modifiedPrescriptions,
+        notDone: numbers.notDone,
+        done: numbers.done,
+        total: numbers.total,
+      };
+      const diagnoses = user.patientDiagnoses.map((diagnosis) => ({
+        id: diagnosis.id,
+        name: diagnosis.disease.name,
+      }));
+
+      const filterDiseasesToOneDisease = diagnoses.filter(
+        (diagnosis, index, self) =>
+          index === self.findIndex((t) => t.name === diagnosis.name)
       );
-      const allergies = await PallergyModule.findForPatient(user.id);
-      const diagnosis = await DiagnosisModule.findForPatient(user.id);
-      const diagnoses = diagnosis.map((diag) => {
-        return diag.disease.name;
+
+      const allergies = user.patientAllergies.map((allergy) => ({
+        id: allergy.id,
+        name: allergy.allergy.name,
+      }));
+
+      const filterAllergiesToOneAllergy = allergies.filter(
+        (allergy, index, self) =>
+          index === self.findIndex((t) => t.name === allergy.name)
+      );
+
+      res.status(StatusCodes.OK).json({
+        message: ReasonPhrases.OK,
+        data: {
+          user,
+          prescriptions: modifiedPrescriptionsToResponse,
+          diagnoses: filterDiseasesToOneDisease,
+          allergies: filterAllergiesToOneAllergy,
+        },
       });
-      user.password = undefined;
-      res
-        .status(StatusCodes.OK)
-        .json({ prescriptions, allergies, diagnoses, user });
     } catch (err) {
       console.log(err);
       next(err);

@@ -41,7 +41,6 @@ export const handlePostgresError = (
   err: DatabaseError,
   res: Response
 ): boolean => {
-  console.log(err);
   switch (err.code) {
     case "23503":
       const constraintMatch = err.detail?.match(/Key \((\w+)\)/);
@@ -59,8 +58,8 @@ export const handlePostgresError = (
       }
 
       res.status(StatusCodes.BAD_REQUEST).json({
+        field: err.column,
         message,
-        field,
       });
       return true;
 
@@ -72,6 +71,7 @@ export const handlePostgresError = (
 
     case "23505":
       res.status(StatusCodes.CONFLICT).json({
+        field: err.column,
         message: "Duplicate entry detected",
       });
       return true;

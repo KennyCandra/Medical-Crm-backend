@@ -35,6 +35,7 @@ export default class NotificationModule {
         "notification.isRead as isRead",
         "notification.created_at as created_at",
         "CONCAT(user.first_name, ' ', user.last_name) as name",
+        "notification.entity as entity"
       ])
       .orderBy("notification.isRead", "ASC")
       .addOrderBy("notification.created_at", "DESC")
@@ -45,7 +46,7 @@ export default class NotificationModule {
   static async getUnreadNotifications(userId: string) {
     const notifications = await AppDataSource.getRepository(Notification).find({
       where: {
-        foreignItemId: userId,
+        user: { id: userId },
         isRead: false,
       },
       order: {

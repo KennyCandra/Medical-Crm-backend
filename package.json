@@ -23,7 +23,6 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@google/genai": "^0.10.0",
     "@sendgrid/mail": "^8.1.5",
     "@tailwindcss/cli": "^4.1.3",
     "@vercel/node": "^5.3.0",
@@ -32,6 +31,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "groq-sdk": "^0.30.0",
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.3",

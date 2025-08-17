@@ -15,7 +15,7 @@ export default class AllergyModule {
 
     static async fetchSpecificAllergy(searchTerm: string) {
         try {
-            const value = `%${searchTerm}%`;
+            const value = `${searchTerm}%`;
             const allergies = await AppDataSource.getRepository(Allergy)
                 .createQueryBuilder('a')
                 .where('a.name LIKE :value', { value })

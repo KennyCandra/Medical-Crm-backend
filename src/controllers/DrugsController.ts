@@ -15,6 +15,7 @@ class DrugController {
 
       const parsedDrug = JSON.parse(drug as string);
       const parsedDrugString = parsedDrug.map((d) => d.name);
+      
       let parsedTextOldDrugInterActionAndAllergies = null;
       let parsedTextForDrugInteraction = null;
       if (patientNid) {

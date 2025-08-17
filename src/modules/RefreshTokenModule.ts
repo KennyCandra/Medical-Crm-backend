@@ -20,18 +20,11 @@ export default class RefreshTokenModule {
     tokenSignature: string
   ): Promise<RefreshToken | null> {
     await this.cleanExpiredTokens();
-    return await AppDataSource.getRepository(RefreshToken).findOne({
-      where: {
-        tokenSignature,
-      },
-      relations: {
-        user: {
-          doctorProfile: {
-            specialization: true,
-          },
-        },
-      },
-    });
+    return await AppDataSource.getRepository(RefreshToken).createQueryBuilder("refreshToken")
+    .leftJoinAndSelect("refreshToken.user", "user")
+    .where("refreshToken.tokenSignature = :tokenSignature", { tokenSignature })
+    .leftJoinAndSelect("user.doctorProfile", "doctorProfile")
+    .getOne();
   }
 
   static async cleanExpiredTokens(): Promise<void> {

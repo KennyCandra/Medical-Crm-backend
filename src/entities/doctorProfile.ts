@@ -11,7 +11,6 @@ import { Specialization } from "./specialization";
 import { User } from "./user";
 import { Diagnosis } from "./diagnosis";
 import { Prescription } from "./prescription";
-import { ReportsEntity } from "./ReportsEntity";
 import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
@@ -48,6 +47,4 @@ export class DoctorProfile extends DefaultDocument {
   })
   prescriptions: Prescription[];
 
-  @OneToMany(() => ReportsEntity, (reports) => reports.doctor)
-  reports: ReportsEntity[];
 }

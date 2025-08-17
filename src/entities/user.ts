@@ -80,4 +80,7 @@ export class User extends DefaultDocument {
 
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
+
+  @OneToMany(() => ReportsEntity, (reports) => reports.reporter)
+  reportedBy: ReportsEntity[];
 }

@@ -27,8 +27,6 @@ router.delete("/logout", AuthController.logOut);
 
 router.get("/search/:nid", AuthController.searchPatient);
 
-router.get('/patient/:nid' , Auth.checkToken ,AuthController.fetchAllPatientData)
-
-router.get("/profile", Auth.checkToken, AuthController.fetchUser);
+router.get('/patient/:nid'  ,AuthController.fetchAllPatientData)
 
 export default router;
