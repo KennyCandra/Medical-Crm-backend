@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import DiagnosisModule from "../modules/DiagnosisModule";
-import { AppDataSource } from "../../ormconfig";
 import UserModules from "../modules/UserModules";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import createHttpError from "http-errors";
