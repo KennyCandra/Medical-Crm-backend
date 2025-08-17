@@ -15,11 +15,11 @@ export const AppDataSource = new DataSource({
   entities:
     process.env.ENV_MODE === "development"
       ? ["src/entities/*.ts"]
-      : ["src/entities/*.js"],
+      : ["dist/src/entities/*.js"],
   migrations:
     process.env.ENV_MODE === "development"
       ? ["src/migrations/*.ts"]
-      : ["src/migrations/*.js"],
+      : ["dist/src/migrations/*.js"],
   subscribers: [],
   schema: "public",
 });
