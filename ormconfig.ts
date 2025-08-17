@@ -12,8 +12,8 @@ export const AppDataSource = new DataSource({
   synchronize: true,
   ssl: true,
   logging: true,
-  entities: ["src/entities/*.ts"]
-  migrations: ["src/migrations/*.ts"]
+  entities: ["src/entities/*.ts"],
+  migrations: ["src/migrations/*.ts"],
   subscribers: [],
   schema: "public",
 });
