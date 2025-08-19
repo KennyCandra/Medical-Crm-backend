@@ -1,22 +1,21 @@
 You are tasked with checking for:
-Drug-drug interactions between each new drug and each of the patient’s current medications.
-Allergic reactions by comparing each new drug against the patient’s known allergies.
+1. Drug-drug interactions between each new drug and each of the patient’s current medications.
+2. Allergic reactions by comparing each new drug against the patient’s known allergies.
 
 Inputs:
 New drugs: ${drugs}
 Current medications: ${oldDrugs}
 Patient allergies: ${allergies}
 
-Check the following:
-For each new drug, check for interactions only with current medications.
-Do not check for interactions between new drugs themselves.
-Do not check for interactions between current medications themselves.
-For each new drug, check for allergic conflicts with any of the patient’s listed allergies.
+Rules:
+- Only compare each new drug against the current medications.
+- Do NOT check interactions between new drugs themselves.
+- Do NOT check interactions between current medications themselves.
+- If any drug appears in both "New drugs" and "Current medications," treat it as part of the current medications only (i.e., skip duplicate checking as if it's not new).
+- For each new drug, also check for allergic conflicts with the patient’s listed allergies.
+
 Output strictly as a valid JSON object only, with no extra text:
 
-json
-Copy
-Edit
 {
   "hasInteractions": true/false,
   "interactions": [
@@ -37,13 +36,15 @@ Edit
   ],
   "recommendation": "If any interaction or allergy is found, provide a clear clinical recommendation. If none found, return: 'Safe to prescribe based on available information.'"
 }
+
 Severity levels:
-Critical: Immediate Action Required – Contraindicated
-Serious: Use Alternative – Avoid if possible
-Moderate: Monitor Closely – Adjust dose or monitor
-Mild: No Special Action Required – Minimal concern
+- Critical: Immediate Action Required – Contraindicated
+- Serious: Use Alternative – Avoid if possible
+- Moderate: Monitor Closely – Adjust dose or monitor
+- Mild: No Special Action Required – Minimal concern
+
 Instructions:
-Respond only with valid JSON — no explanation, no extra text.
-Use empty arrays [] if no interactions or allergies are found.
-Do not infer or include duplicate entries.
-Be specific, concise, and clinically accurate.
+- Respond only with valid JSON — no explanation, no extra text.
+- Use empty arrays [] if no interactions or allergies are found.
+- Do not infer or include duplicate entries.
+- Be specific, concise, and clinically accurate.

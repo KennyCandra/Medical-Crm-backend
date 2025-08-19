@@ -336,9 +336,6 @@ class AuthController {
       const {prescriptions , numbers} = await PrescriptionModule.fetchLimitedPrescriptions(user.id);
 
       user = userWithoutImportantData(user);
-
-      console.log(prescriptions);
-
       let modifiedPrescriptions = prescriptions.map((presc => {
         return {
           id: presc.id,
