@@ -15,6 +15,7 @@ import {
 import SocketManager from "../../socket";
 import { runInTransaction } from "../utils/TransactionalHelper";
 import NotificationModule from "../modules/NotificationModule";
+import { User } from "../entities/user";
 export default class PrescriptionController {
   static async createPrescription(
     req: Request,
@@ -130,13 +131,30 @@ export default class PrescriptionController {
         "prescribedDrugs",
         "prescribedDrugs.drug",
       ]);
+
       if (!prescription) {
         throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
       }
 
-      res
-        .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, prescription });
+      const newPrescription = {
+        patientId: prescription.patient.id,
+        doctorName: `${prescription.doctor.user.first_name} ${prescription.doctor.user.last_name}`,
+        patientName: `${prescription.patient.first_name} ${prescription.patient.last_name}`,
+        startDate: prescription.start_date,
+        status: prescription.status,
+        prescribedDrugs: prescription.prescribedDrugs.map((drug) => ({
+          name: drug.drug.name,
+          dosage: drug.dosage,
+          frequency: drug.frequency,
+          time: drug.time,
+        })),
+        description: prescription.description,
+      };
+
+      res.status(StatusCodes.OK).json({
+        message: ReasonPhrases.OK,
+        data: { prescription: newPrescription },
+      });
     } catch (err) {
       next(err);
     }
@@ -148,10 +166,31 @@ export default class PrescriptionController {
     next: NextFunction
   ) {
     try {
-      const { patientNid } = req.params;
-      const user = await UserModules.findUserByNid(patientNid);
+      const { patientNid, doctorId } = req.params;
+      let user: User | null = null;
 
-      const prescriptions = await prescriptionModule.findManyPrescriptions(null,user.id);
+      if (patientNid) {
+        user = await UserModules.findUserByNid(patientNid);
+      }
+
+      let prescriptions: Prescription[] = [];
+      console.log(req.body.role);
+
+      if (user?.id !== req.body.userId && req.body.role !== "doctor") {
+        throw createhttperror(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
+      }
+
+      {
+        doctorId
+          ? (prescriptions = await prescriptionModule.findManyPrescriptions(
+              doctorId,
+              null
+            ))
+          : (prescriptions = await prescriptionModule.findManyPrescriptions(
+              null,
+              user.id
+            ));
+      }
 
       if (!prescriptions) {
         throw createhttperror.NotFound("can't find this");
@@ -166,7 +205,9 @@ export default class PrescriptionController {
         prescriptions,
         completed: completedPresc,
         notCompleted: notCompletedPresc,
-        userName : user.first_name + " " + user.last_name,
+        userName: user
+          ? user.first_name + " " + user.last_name
+          : "Unknown User",
       };
 
       res.status(StatusCodes.OK).json({

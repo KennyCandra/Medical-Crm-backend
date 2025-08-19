@@ -62,7 +62,6 @@ class prescriptionModule {
           queryBuilder.leftJoinAndSelect("prescribedDrugs.drug", "drug");
         }
       }
-
       const prescription = await queryBuilder.getOne();
       return prescription;
     } catch (err) {

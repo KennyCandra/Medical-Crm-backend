@@ -35,7 +35,8 @@ export default class NotificationModule {
         "notification.isRead as isRead",
         "notification.created_at as created_at",
         "CONCAT(user.first_name, ' ', user.last_name) as name",
-        "notification.entity as entity"
+        "notification.entity as entity",
+        "notification.foreignItemId as foreignItemId",
       ])
       .orderBy("notification.isRead", "ASC")
       .addOrderBy("notification.created_at", "DESC")
