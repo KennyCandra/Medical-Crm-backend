@@ -36,7 +36,6 @@ router.get(
 router.get(
   "/patient/:patientNid",
   Auth.checkToken,
-  Auth.checkRoles(["doctor"]),
   PrescriptionController.fetchManyPrescriptions
 );
 

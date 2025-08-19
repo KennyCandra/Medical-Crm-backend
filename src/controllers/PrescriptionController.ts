@@ -174,23 +174,20 @@ export default class PrescriptionController {
       }
 
       let prescriptions: Prescription[] = [];
-      console.log(req.body.role);
 
       if (user?.id !== req.body.userId && req.body.role !== "doctor") {
         throw createhttperror(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
       }
 
-      {
-        doctorId
-          ? (prescriptions = await prescriptionModule.findManyPrescriptions(
-              doctorId,
-              null
-            ))
-          : (prescriptions = await prescriptionModule.findManyPrescriptions(
-              null,
-              user.id
-            ));
-      }
+      doctorId
+        ? (prescriptions = await prescriptionModule.findManyPrescriptions(
+            doctorId,
+            null
+          ))
+        : (prescriptions = await prescriptionModule.findManyPrescriptions(
+            null,
+            user.id
+          ));
 
       if (!prescriptions) {
         throw createhttperror.NotFound("can't find this");
