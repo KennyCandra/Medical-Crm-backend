@@ -10,9 +10,21 @@ import { Disease } from "../entities/disease";
 import { Diagnosis } from "../entities/diagnosis";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 
+
+type Row1 = {
+  month: string;
+  count: string;
+  cumulativeCount: string;
+  diseaseName: string;
+}
+
+type Row2 = {
+  year: string;
+  count: string
+}
 export class AnalyticsController {
   static async basicAnalytics(
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
@@ -31,7 +43,7 @@ export class AnalyticsController {
 
       res
         .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, drugAnalytics });
+        .json({ message: ReasonPhrases.OK, data: { drugAnalytics } });
     } catch (error) {
       console.log(error);
       next(error);
@@ -45,9 +57,14 @@ export class AnalyticsController {
   ): Promise<void> {
     try {
       const { id } = req.params;
+
+      if (!id) {
+        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+      }
+
       const category = await CategoryModule.findCat(id);
       if (!category) {
-        throw createhttperror.NotFound["not found"];
+        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
       }
       const drugAnalytics = await AppDataSource.getRepository(Classification)
         .createQueryBuilder("c")
@@ -62,7 +79,7 @@ export class AnalyticsController {
 
       res
         .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, drugAnalytics, category });
+        .json({ message: ReasonPhrases.OK, data: { drugAnalytics, category } });
     } catch (err) {
       next(err);
     }
@@ -75,9 +92,12 @@ export class AnalyticsController {
   ): Promise<void> {
     try {
       const { id } = req.params;
+      if (!id) {
+        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+      }
       const classification = await ClassificationModule.findClass(id);
       if (!classification) {
-        throw createhttperror.NotFound["not found"];
+        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
       }
       const drugAnalytics = await AppDataSource.getRepository(Drug)
         .createQueryBuilder("d")
@@ -89,31 +109,10 @@ export class AnalyticsController {
         .groupBy("d.name")
         .addGroupBy("d.id")
         .getRawMany();
-      res
-        .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, drugAnalytics, classification });
-    } catch (err) {
-      console.log(err);
-      next(err);
-    }
-  }
-
-  static async diseaseAnalytics(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const disease = await AppDataSource.getRepository(Disease)
-        .createQueryBuilder("d")
-        .select("d.name", "name")
-        .addSelect("COUNT(pb.diseaseId)", "count")
-        .leftJoin("d.diagnoses", "pb")
-        .groupBy("d.id")
-        .addGroupBy("d.name")
-        .getRawMany();
-      console.log(disease);
-      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, disease });
+      res.status(StatusCodes.OK).json({
+        message: ReasonPhrases.OK,
+        data: { drugAnalytics, classification },
+      });
     } catch (err) {
       console.log(err);
       next(err);
@@ -149,10 +148,10 @@ export class AnalyticsController {
         lastMonthQuery > 12 ||
         firstMonthQuery > lastMonthQuery
       ) {
-        throw createhttperror.BadRequest["invalid date range"];
+        throw createhttperror.BadRequest("invalid date range");
       }
       const results = await disease.query(
-        `SELECT 
+        `SELECT
                   EXTRACT(MONTH FROM d.diagnosed_at) AS "month",
                   COUNT(d.id) AS "count",
                   SUM(COUNT(d.id)) OVER (
@@ -177,16 +176,48 @@ export class AnalyticsController {
         [diseaseId as Disease["id"], yearQuery, firstMonthQuery, lastMonthQuery]
       );
 
-      const data = results.map((row) => ({
+      const results2 = await disease.query(
+        `
+        SELECT 
+          EXTRACT(YEAR FROM d.diagnosed_at) AS "year",
+          COUNT(d.id) AS "count"
+        FROM 
+          diagnosis AS d
+        WHERE 
+          d."diseaseId" = $1
+          AND EXTRACT(YEAR FROM d.diagnosed_at) < $2
+        GROUP BY 
+          "year"
+      `,
+        [diseaseId as Disease["id"], yearQuery]
+      );
+
+      const firstData = results.map((row: Row1) => ({
         month: parseInt(row.month),
-        monthName: new Date(2025, parseInt(row.month) - 1, 1).toLocaleString(
-          "default",
-          { month: "long" }
-        ),
+        monthName: new Date(
+          yearQuery,
+          parseInt(row.month) - 1,
+          1
+        ).toLocaleString("default", { month: "long" }),
         count: parseInt(row.count),
         cumulativeCount: parseInt(row.cumulativeCount),
         diseaseName: row.diseaseName,
       }));
+
+      const secondData = results2.map((row: Row2) => ({
+        year: parseInt(row.year),
+        count: parseInt(row.count),
+      }));
+
+      const previousYearsCount = secondData.reduce(
+        (prev: number, count: { year: number; count: number }) =>
+          prev + count.count,
+        0
+      );
+      const data = {
+        current: firstData,
+        previous: previousYearsCount,
+      };
       res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, data });
     } catch (err) {
       next(err);

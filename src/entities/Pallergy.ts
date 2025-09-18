@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, JoinColumn, ManyToOne } from "typeorm";
 import { Allergy } from "./Allergy";
 import { User } from "./user";
 import { DefaultDocument } from "./NormalDocument";
@@ -6,11 +6,16 @@ import { DefaultDocument } from "./NormalDocument";
 @Entity()
 export class Pallergy extends DefaultDocument {
 
-    @ManyToOne(() => User, patient => patient.patientAllergies)
+    @ManyToOne(() => User, patient => patient.patientAllergies, {
+        onDelete: 'CASCADE'
+    })
     @JoinColumn()
     patient: User;
 
-    @ManyToOne(() => Allergy, allergy => allergy.patientAllergies)
+    @ManyToOne(() => Allergy, allergy => allergy.patientAllergies, {
+        nullable: true,
+        onDelete: 'SET NULL'
+    })
     @JoinColumn()
     allergy: Allergy;
 }

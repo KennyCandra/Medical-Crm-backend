@@ -34,8 +34,8 @@ export default class UserModules {
       newUser.last_name = lName;
       newUser.role = role;
       newUser.password = hashedPw;
-      newUser.birth_date = new Date(birth_date) ?? new Date();
-      newUser.blood_type = blood_type;
+      newUser.birth_date = new Date(birth_date!) ?? new Date();
+      newUser.blood_type = blood_type!;
       newUser.email = email;
 
       return newUser;
@@ -84,6 +84,11 @@ export default class UserModules {
         .where("user.id = :id", { id })
         .leftJoinAndSelect("user.doctorProfile", "doctor")
         .getOne();
+
+      if (!user || !user.doctorProfile) {
+        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
+      }
+
       return user;
     } catch (err) {
       console.log(err);
@@ -99,7 +104,7 @@ export default class UserModules {
       const users = await AppDataSource.getRepository(User)
         .createQueryBuilder("user")
         .where("user.NID LIKE :nid", { nid: `${nid}%` })
-        .andWhere("user.role != :role", { role: "owner" })
+        .andWhere("user.role != :role", { role: "admin" })
         .select([
           "user.id AS id",
           "user.NID AS NID",
@@ -127,6 +132,11 @@ export default class UserModules {
         .leftJoinAndSelect("user.patientAllergies", "allergies")
         .leftJoinAndSelect("allergies.allergy", "allergy")
         .getOne();
+
+      if (!user) {
+        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
+      }
+
       return user;
     }
     catch (err) {

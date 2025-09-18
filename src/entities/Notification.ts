@@ -13,7 +13,9 @@ export class Notification extends DefaultDocument {
   @Column()
   isRead: boolean;
 
-  @ManyToOne(() => User, (user) => user.notifications)
+  @ManyToOne(() => User, (user) => user.notifications, {
+    onDelete: 'CASCADE'
+  })
   user: User;
 
   @Column({ nullable: false, enum: ["diagnosis", "prescription", "report"] })

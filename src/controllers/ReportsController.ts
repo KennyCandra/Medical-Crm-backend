@@ -12,12 +12,12 @@ export default class ReportsController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { patientId, prescribedDrugId, doctorId, description } = req.body;
-      console.log(doctorId);
+      const { patientId, prescribedDrugId, reporterId, description } = req.body;
       const [reporter, user] = await Promise.all([
-        UserModules.findUserById(doctorId),
+        UserModules.findUserById(reporterId),
         UserModules.findUserById(patientId),
       ]);
+
 
       if (!reporter) {
         console.log("reporter not found");
@@ -46,7 +46,7 @@ export default class ReportsController {
   }
 
   static async fetchAll(
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
@@ -78,7 +78,16 @@ export default class ReportsController {
   ): Promise<void> {
     try {
       const { reportId } = req.params;
+
+      if (!reportId) {
+        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+      }
+
       const report = await ReportsEntityModule.fetchReport(reportId);
+
+      if (!report) {
+        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
+      }
 
       const singleReport = {
         id: report.id,
@@ -107,8 +116,15 @@ export default class ReportsController {
   ): Promise<void> {
     try {
       const { reportId } = req.params;
+      if (!reportId) {
+        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+      }
       const report = await ReportsEntityModule.fetchReport(reportId);
 
+      if (!report) {
+        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
+      }
+      
       report.reviewed = true;
       await AppDataSource.manager.save(report);
 

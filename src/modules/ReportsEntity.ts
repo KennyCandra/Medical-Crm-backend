@@ -34,7 +34,7 @@ export default class ReportsEntityModule {
     return fethedReports;
   }
 
-  static async fetchReport(reportId: string): Promise<ReportsEntity> {
+  static async fetchReport(reportId: string): Promise<ReportsEntity | null> {
     try {
       const fethedReports = await AppDataSource.getRepository(ReportsEntity)
         .createQueryBuilder("r")
@@ -46,7 +46,7 @@ export default class ReportsEntityModule {
         .leftJoinAndSelect("r.reporter", "do")
         .where("r.id =:id", { id: reportId })
         .getOne();
-      console.log(fethedReports);
+
       return fethedReports;
     } catch (err) {
       console.error(err);

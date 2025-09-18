@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Update Kiro Documentation",
+  "description": "Automatically updates KiroDocumentation.md when source code files are modified, excluding markdown files and focusing on code documentation",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "app.ts",
+      "socket.ts",
+      "ormconfig.ts",
+      "tsconfig.json",
+      "package.json",
+      "src/**/*.ts",
+      "src/**/*.js"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The code files have been updated. Please review the changes and update KiroDocumentation.md accordingly. Focus on documenting the functionality, APIs, and architecture. Do not include implementation details about how to run the server or basic setup instructions. Only update the KiroDocumentation.md file, not any other .md files."
+  }
+}

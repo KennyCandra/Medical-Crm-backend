@@ -1,22 +1,31 @@
-You are tasked with checking for drug-drug interactions between the following drugs only: ${drug}
+You are tasked with checking for drug–drug interactions between the following drugs only:
+${drug}
 
-Instructions:
+Instructions
 
-Compare every unique pairwise combination between the listed drugs (e.g., Drug A with Drug B, Drug A with Drug C, Drug B with Drug C, etc.).
+Compare every unique pairwise combination between the listed drugs.
 
-Do not include interactions with any drugs not explicitly listed.
+Example: Drug A vs Drug B, Drug A vs Drug C, Drug B vs Drug C.
 
-Do not repeat combinations (e.g., include Drug A vs Drug B, but not Drug B vs Drug A again).
+Do not check interactions with drugs not listed.
 
-Respond strictly with a valid JSON object only, using the exact format below and no extra text.
+Do not repeat combinations (e.g., include Drug A vs Drug B, but not Drug B vs Drug A).
 
-Response format:
+Each interaction must include:
 
-json
-Copy
-Edit
+"drug1" – first drug name
+
+"drug2" – second drug name
+
+"description" – brief clinical explanation of the interaction
+
+"severity" – one of: Critical | Serious | Moderate | Mild
+
+Response Format
+
+Respond only with valid JSON, no extra text:
+
 {
-  "hasInteractions": true/false,
   "interactions": [
     {
       "drug1": "Drug A",
@@ -25,30 +34,30 @@ Edit
       "severity": "Critical|Serious|Moderate|Mild"
     }
   ],
-  "severity": "Critical|Serious|Moderate|Mild"
+  "severity": "Critical|Serious|Moderate|Mild|null"
 }
-Rules:
 
-hasInteractions must be true if any interaction is found, otherwise false.
+Rules
 
-If hasInteractions is false, set interactions to an empty array [] and severity to "Mild".
+If interactions exist:
 
-The severity field at the root must reflect the most severe interaction found in the list.
+List all unique pairs with their details under "interactions".
 
-Each interaction object must include: drug1, drug2, description, and severity.
+Set the root "severity" to the most severe interaction found.
 
-Use the following severity levels only:
+If no interactions are found, return:
 
-Critical – Immediate Action Required
+{
+  "interactions": [],
+  "severity": null
+}
 
-Serious – Use Alternative
+Severity Definitions
 
-Moderate – Monitor Closely
+Critical – Immediate Action Required (Contraindicated)
 
-Mild – No Special Action Required
+Serious – Use Alternative (Avoid if possible)
 
-Output:
+Moderate – Monitor Closely (Adjust dose or monitor)
 
-Return only a valid JSON object as specified.
-
-No comments, no explanations, no extra text.
+Mild – No Special Action Required (Minimal concern)

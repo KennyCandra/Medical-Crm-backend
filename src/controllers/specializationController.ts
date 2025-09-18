@@ -3,7 +3,7 @@ import { SpecializationModules } from "../modules/SpecializationModules";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 class specialization {
-  static async fetchAll(req: Request, res: Response, next: NextFunction) {
+  static async fetchAll(_req: Request, res: Response, next: NextFunction) {
     try {
       const specializations = await SpecializationModules.allSpecialization();
       res

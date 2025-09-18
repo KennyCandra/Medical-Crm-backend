@@ -47,7 +47,7 @@ export class SocketManager {
   }
 
   static emit(event: string, data: any) {
-    for (const [id, sockets] of connectUsers) {
+    for (const [_id, sockets] of connectUsers) {
       for (const socket of sockets) {
         this.io.to(socket).emit(event, data);
       }

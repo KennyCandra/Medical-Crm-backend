@@ -5,13 +5,13 @@ import {
   ManyToOne,
   OneToMany,
   OneToOne,
-  PrimaryGeneratedColumn,
 } from "typeorm";
 import { Specialization } from "./specialization";
 import { User } from "./user";
 import { Diagnosis } from "./diagnosis";
 import { Prescription } from "./prescription";
 import { DefaultDocument } from "./NormalDocument";
+import Permission from "./Permissions";
 
 @Entity()
 export class DoctorProfile extends DefaultDocument {
@@ -29,7 +29,8 @@ export class DoctorProfile extends DefaultDocument {
   reason: string;
 
   @ManyToOne(() => Specialization, (specialization) => specialization.doctors, {
-    nullable: false,
+    nullable: true,
+    onDelete: 'SET NULL'
   })
   specialization: Specialization;
 
@@ -39,12 +40,21 @@ export class DoctorProfile extends DefaultDocument {
 
   @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.doctor, {
     nullable: true,
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
   })
   diagnoses: Diagnosis[];
 
   @OneToMany(() => Prescription, (prescription) => prescription.doctor, {
     nullable: true,
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
   })
   prescriptions: Prescription[];
 
+  @OneToMany(() => Permission, (permission) => permission.doctor, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
+  permissions: Permission[];
 }

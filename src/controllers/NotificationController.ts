@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import NotificationModule from "../modules/NotificationModule";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { AppDataSource } from "../../ormconfig";
+import createHttpError from 'http-errors'
 
 export default class NotificationController {
   static async getNotifications(
@@ -44,9 +45,12 @@ export default class NotificationController {
     next: NextFunction
   ) {
     try {
-      const notificationId = req.params.id;
+      const { id } = req.params;
+      if (!id) {
+        throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+      }
       const notification =
-        await NotificationModule.deleteNotification(notificationId);
+        await NotificationModule.deleteNotification(id);
       res
         .status(StatusCodes.OK)
         .json({ message: ReasonPhrases.OK, data: notification });

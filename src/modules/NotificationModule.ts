@@ -7,7 +7,7 @@ export default class NotificationModule {
   static async createNotification(
     title: string,
     message: string,
-    foreignItemId: string,
+    foreignItemId: string | null,
     userId: string,
     entity: "diagnosis" | "prescription" | "report",
     action: "create" | "update" | "delete"
@@ -15,7 +15,7 @@ export default class NotificationModule {
     const notification = new Notification();
     notification.title = title;
     notification.message = message;
-    notification.foreignItemId = foreignItemId;
+    notification.foreignItemId = foreignItemId ?? '';
     notification.isRead = false;
     notification.user = { id: userId } as User;
     notification.entity = entity;

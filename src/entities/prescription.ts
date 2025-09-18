@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from "typeorm";
+import { Entity, Column, OneToMany, ManyToOne } from "typeorm";
 import { PrescribedDrug } from "./prescribedDrug";
 import { DoctorProfile } from "./doctorProfile";
 import { User } from "./user";
@@ -21,7 +21,10 @@ export class Prescription extends DefaultDocument {
     @ManyToOne(() => DoctorProfile, (profile) => profile.prescriptions)
     doctor: DoctorProfile;
 
-    @OneToMany(() => PrescribedDrug, (prescribedDrug) => prescribedDrug.prescription)
+    @OneToMany(() => PrescribedDrug, (prescribedDrug) => prescribedDrug.prescription, {
+        cascade: ['remove', 'update'],
+        onDelete: 'CASCADE'
+    })
     prescribedDrugs: PrescribedDrug[];
 }
 

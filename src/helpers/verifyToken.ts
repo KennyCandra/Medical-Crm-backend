@@ -6,7 +6,7 @@ export const verifyToken = async (
   token: string
 ): Promise<{ decodedToken: any; expired: boolean }> => {
   try {
-    const decodedToken = verify(token, process.env.JWT_SECRET_ACCESS as string);
+    const decodedToken = verify(token, process.env['JWT_SECRET_ACCESS'] as string);
     return { decodedToken, expired: false };
   } catch (error) {
     return { decodedToken: null, expired: true };

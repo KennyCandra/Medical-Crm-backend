@@ -1,15 +1,15 @@
-
 import Groq from "groq-sdk";
 import prescriptionModule from "../modules/PrescriptionModule";
 import PallergyModule from "../modules/PallergyModule";
 import extractJsonFromString from "../helpers/JsonCut";
 import UserModules from "../modules/UserModules";
 import fs from "fs";
-import path from "path";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import createHttpError from 'http-errors'
 
 class AiPrompts {
   private static groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
+    apiKey: process.env['GROQ_API_KEY'],
   });
 
   private static async callOpenRouterAPI(content: string): Promise<string> {
@@ -26,7 +26,7 @@ class AiPrompts {
             content: content,
           },
         ],
-        model: process.env.GROQ_MODEL,
+        model: process.env['GROQ_MODEL'] || 'gemma2-9b-it',
         temperature: 0.1,
         max_tokens: 2048,
       });
@@ -44,37 +44,37 @@ class AiPrompts {
     nid: string,
     parsedDrug: string
   ): Promise<string> {
-
     const patient = await UserModules.findUserByNid(nid);
+
+    if (!patient) {
+      throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
+    }
+
     const drugs =
       await prescriptionModule.fetchDrugsFromPrescriptinsWithStatusTakingForSinglePatient(
         patient.id
       );
     const allergies = await PallergyModule.findForPatient(patient.id);
 
-    const oldDrugs = drugs?.map((d) => d.name) || "";
-    const oldAllergies = allergies?.map((d) => d.allergy) || "";
+    const oldDrugs = drugs?.map((d) => d.name) || [];
+    const oldAllergies = allergies?.map((d) => d.allergy) || [];
 
     const textForOldDrugInterActionAndAllergies = fs.readFileSync(
       "src/ai-prompts/OldDrugInteractionAndAllergies.txt",
       "utf8"
     );
 
-
-
     const newTextForDrugInteraction = textForOldDrugInterActionAndAllergies
-      .replace("${drugs}", parsedDrug as string)
-      .replace("${oldDrugs}", oldDrugs as string)
-      .replace("${allergies}", oldAllergies as string);
-
+      .replace("${drugs}", parsedDrug)
+      .replace("${oldDrugs}", oldDrugs.join(", "))
+      .replace("${allergies}", oldAllergies.join(", "));
 
     const analysisText = await this.callOpenRouterAPI(
       newTextForDrugInteraction
     );
 
-
     const json = extractJsonFromString(analysisText);
-    const parsedTextOldDrugInterActionAndAllergies = JSON.parse(json);
+    const parsedTextOldDrugInterActionAndAllergies = JSON.parse(json as string);
     return parsedTextOldDrugInterActionAndAllergies;
   }
 
@@ -95,7 +95,7 @@ class AiPrompts {
 
     const text = extractJsonFromString(analysisTextForDrugInteraction);
 
-    const parsedTextForDrugInteraction = JSON.parse(text);
+    const parsedTextForDrugInteraction = JSON.parse(text as string);
     return parsedTextForDrugInteraction;
   }
 }

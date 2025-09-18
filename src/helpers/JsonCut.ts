@@ -1,4 +1,4 @@
-function extractJsonFromString(inputString) {
+function extractJsonFromString(inputString: string) {
     const jsonPattern = /\{[\s\S]*\}/;
 
     const match = inputString.match(jsonPattern);

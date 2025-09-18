@@ -3,8 +3,10 @@ import createHttpError from "http-errors";
 import { User } from "../entities/user";
 import { Specialization } from "../entities/specialization";
 import { AppDataSource } from "../../ormconfig";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 export default class DoctorProfileModules {
+
   static async createDoctor({
     user,
     specialization,
@@ -22,9 +24,7 @@ export default class DoctorProfileModules {
       newDoctor.status = "pending";
       return newDoctor;
     } catch (err) {
-      if (err.code === "23505") {
-        throw createHttpError.BadRequest("license already exists");
-      }
+      throw err
     }
   }
 
@@ -37,11 +37,11 @@ export default class DoctorProfileModules {
       });
 
       if (!doctor) {
-        throw createHttpError.NotFound["doctor id is wrong"];
+        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
       }
       return doctor;
     } catch (err) {
-      throw createHttpError.InternalServerError["internal server erro"];
+      throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -53,10 +53,13 @@ export default class DoctorProfileModules {
         .where(`user.id = :id`, { id })
         .getOne();
 
+      if (!doctorUser) {
+        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
+      }
+
       return doctorUser.doctorProfile;
     } catch (err) {
-      if (err.statusCode === 404) throw err;
-      throw createHttpError(500, "Internal server error");
+      throw err
     }
   }
 
@@ -78,21 +81,22 @@ export default class DoctorProfileModules {
         .getRawMany();
       return doctors;
     } catch (err) {
-      throw createHttpError.InternalServerError["internal server erro"];
+      throw err
     }
   }
 
   static async approveDoctor(doctors: DoctorProfile[]) {
     try {
-      const approvedDoctors = [];
+      const approvedDoctors: DoctorProfile[] = [];
       for (const doctor of doctors) {
-      await AppDataSource.getRepository(
+        await AppDataSource.getRepository(
           DoctorProfile
         ).update(doctor.id, { status: doctor.status, reason: doctor.reason });
       }
       return approvedDoctors;
     } catch (err) {
-      throw createHttpError.InternalServerError["internal server erro"];
+      throw err
     }
   }
+
 }

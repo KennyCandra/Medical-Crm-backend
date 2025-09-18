@@ -49,7 +49,7 @@ export const handlePostgresError = (
       let message = "Invalid reference";
       for (const error of possibleErrors) {
         if (
-          field.includes(error.field) ||
+          field?.includes(error.field) ||
           err.constraint?.includes(error.field)
         ) {
           message = error.message;

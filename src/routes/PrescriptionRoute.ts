@@ -9,14 +9,13 @@ const router = express.Router();
 router.post(
   "/create",
   Auth.checkToken,
-  Auth.checkRoles(["doctor"]),
+  Auth.checkRoles(["doctor", "ed"]),
   PrescriptionController.createPrescription
 );
 
 router.put(
   "/edit/:prescriptionId",
   Auth.checkToken,
-  Auth.checkRoles(["doctor"]),
   PrescriptionController.editPrescription
 );
 
@@ -29,7 +28,7 @@ router.get(
 router.get(
   "/doctor/:doctorId",
   Auth.checkToken,
-  Auth.checkRoles(["doctor"]),
+  Auth.checkRoles(["doctor", "ed"]),
   PrescriptionController.fetchManyPrescriptions
 );
 

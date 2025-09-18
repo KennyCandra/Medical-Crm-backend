@@ -45,7 +45,7 @@ class Auth {
   static checkRoles(allowedRoles: string[]) {
     return async (req: Request, res: Response, next: NextFunction) => {
       const { role } = req.body;
-      if (role === "owner") {
+      if (role === "admin") {
         next();
         return;
       }

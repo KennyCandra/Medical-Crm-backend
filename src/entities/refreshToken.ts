@@ -8,7 +8,9 @@ export class RefreshToken extends DefaultDocument {
   @Index()
   tokenSignature: string;
 
-  @ManyToOne(() => User, (user) => user.refreshTokens)
+  @ManyToOne(() => User, (user) => user.refreshTokens, {
+    onDelete: 'CASCADE'
+  })
   @JoinColumn({ name: "userId" })
   user: User;
 

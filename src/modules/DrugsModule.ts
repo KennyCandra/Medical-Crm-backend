@@ -1,28 +1,18 @@
 import createhttperror from "http-errors";
 import { AppDataSource } from "../../ormconfig";
 import { Drug } from "../entities/drug";
-import { StatusCodes , ReasonPhrases } from "http-status-codes";
+import { StatusCodes, ReasonPhrases } from "http-status-codes";
 
 class DrugsModule {
   static async findDrug({ drugId }: { drugId: string }) {
-    try {
-      const drugRepo = await AppDataSource.getRepository(Drug);
-      const drug = await drugRepo.findOneBy({ id: drugId });
+    const drugRepo = await AppDataSource.getRepository(Drug);
+    const drug = await drugRepo.findOneBy({ id: drugId });
 
-      if (!drug) {
-        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
-      }
-
-      return drug;
-    } catch (err) {
-      if (!err) {
-        throw new createhttperror.InternalServerError[
-          "internal server error"
-        ]();
-      } else {
-        throw err;
-      }
+    if (!drug) {
+      throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
     }
+
+    return drug;
   }
 
   static async allDrugs(value: string) {
