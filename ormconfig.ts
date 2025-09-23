@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 import dotenv from "dotenv";
-import path from "path";
+import * as path from "path";
 dotenv.config();
 
 export const AppDataSource = new DataSource({
@@ -16,11 +16,11 @@ export const AppDataSource = new DataSource({
   entities:
     process.env['ENV_MODE'] === "development"
       ? ["src/entities/*.ts"]
-      : [path.join(__dirname, "dist/src/entities/*.js")],
+      : [path.join(__dirname, 'src/entities/*.js')],
   migrations:
     process.env['ENV_MODE'] === "development"
       ? ["src/migrations/*.ts"]
-      : [path.join(__dirname, "dist/src/migrations/*.js")],
+      : [path.join(__dirname, 'src/migrations/*.js')],
   subscribers: [],
   schema: "public",
 });
