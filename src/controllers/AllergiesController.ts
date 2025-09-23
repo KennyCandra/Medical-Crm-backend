@@ -36,7 +36,8 @@ export default class AllergiesController {
 
   static async addAllergy(req: Request, res: Response, next: NextFunction) {
     try {
-      const { userId, values } = req.body;
+      const { values } = req.body;
+      const userId = req.user.id;
       const patient = await UserModules.findUserById(userId);
       if (!patient) {
         throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);

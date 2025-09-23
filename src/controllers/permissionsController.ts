@@ -9,7 +9,8 @@ import createHttpError from 'http-errors'
 export default class PermissionRequestController {
   static async makeRequest(req: Request, res: Response, next: NextFunction) {
     try {
-      const { userId, patientId, permissionLevel } = req.body;
+      const { patientId, permissionLevel } = req.body;
+      const userId = req.user.id;
       const [doctor, patient] = await Promise.all([
         DoctorProfileModules.findDoctorByid(userId),
         UserModules.findUserByNid(patientId),
@@ -39,7 +40,8 @@ export default class PermissionRequestController {
   ): Promise<void> {
     try {
       const { id } = req.params;
-      const { status, reason, permissionLevel, userId } = req.body;
+      const { status, reason, permissionLevel } = req.body;
+      const userId = req.user.id;
 
       if (!id) {
         throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
@@ -51,7 +53,7 @@ export default class PermissionRequestController {
           .status(StatusCodes.NOT_FOUND)
           .json({ message: ReasonPhrases.NOT_FOUND });
       }
-      if (permissionRequest.patient !== userId) {
+      if (permissionRequest.patient.id !== userId) {
         res
           .status(StatusCodes.FORBIDDEN)
           .json({ message: ReasonPhrases.FORBIDDEN });
@@ -73,7 +75,7 @@ export default class PermissionRequestController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const patientId = req.body.userId;
+      const patientId = req.user.id;
       const requests = await PermissionsModule.getRequestsByPatientId(patientId);
       res.status(200).json({ message: ReasonPhrases.OK, data: requests });
     } catch (err) {
@@ -87,7 +89,7 @@ export default class PermissionRequestController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const doctorId = req.body.userId;
+      const doctorId = req.user.id;
       const doctor = await DoctorProfileModules.findDoctorByid(doctorId);
 
       if (!doctor) {

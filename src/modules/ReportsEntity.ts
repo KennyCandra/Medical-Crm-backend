@@ -1,7 +1,7 @@
 import { AppDataSource } from "../../ormconfig";
 import { User } from "../entities/user";
 import { PrescribedDrug } from "../entities/prescribedDrug";
-import { ReportsEntity } from "../entities/ReportsEntity";
+import { Reports } from "../entities/Reports";
 
 export default class ReportsEntityModule {
   static async createReportEntity(
@@ -9,9 +9,9 @@ export default class ReportsEntityModule {
     patient: User,
     description: string,
     prescribedDrug: PrescribedDrug
-  ): Promise<ReportsEntity> {
+  ): Promise<Reports> {
     try {
-      const newReport = new ReportsEntity();
+      const newReport = new Reports();
       newReport.reporter = reporter;
       newReport.patient = patient;
       newReport.description = description;
@@ -24,8 +24,8 @@ export default class ReportsEntityModule {
     }
   }
 
-  static async fetchAllReportsforowner(): Promise<ReportsEntity[]> {
-    const fethedReports = await AppDataSource.getRepository(ReportsEntity)
+  static async fetchAllReportsforowner(): Promise<Reports[]> {
+    const fethedReports = await AppDataSource.getRepository(Reports)
       .createQueryBuilder("r")
       .leftJoinAndSelect("r.patient", "p")
       .leftJoinAndSelect("r.reporter", "d")
@@ -34,9 +34,9 @@ export default class ReportsEntityModule {
     return fethedReports;
   }
 
-  static async fetchReport(reportId: string): Promise<ReportsEntity | null> {
+  static async fetchReport(reportId: string): Promise<Reports | null> {
     try {
-      const fethedReports = await AppDataSource.getRepository(ReportsEntity)
+      const fethedReports = await AppDataSource.getRepository(Reports)
         .createQueryBuilder("r")
         .leftJoinAndSelect("r.patient", "p")
         .leftJoinAndSelect("r.prescribedDrug", "pd")
@@ -57,8 +57,8 @@ export default class ReportsEntityModule {
   static async fetchReportforPatientOrDoctor(
     doctorId: string | null,
     patientId: string | null
-  ): Promise<ReportsEntity[]> {
-    const fethedReports = await AppDataSource.getRepository(ReportsEntity)
+  ): Promise<Reports[]> {
+    const fethedReports = await AppDataSource.getRepository(Reports)
       .createQueryBuilder("r")
       .leftJoinAndSelect("r.patient", "p")
       .leftJoinAndSelect("r.prescribedDrug", "pd")

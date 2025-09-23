@@ -16,7 +16,7 @@ export class DiagnosisController {
     next: NextFunction
   ) {
     try {
-      const { patientId, doctorId, diseaseId, severity, notes, userId } =
+      const { patientId, doctorId, diseaseId, severity, notes } =
         req.body;
 
       const result = await runInTransaction(async (manager) => {
@@ -25,7 +25,7 @@ export class DiagnosisController {
           UserModules.findUserById(patientId as string),
           DoctorModules.findDoctor(doctorId as string),
         ]);
-        if (!patient.openAccess && req.body.role !== 'admin' && patient.id !== userId) {
+        if (!patient.openAccess && req.user.role !== 'admin' && patient.id !== req.user.id) {
           const hasPermission =
             await PermissionsModule.checkPermissionValidation(
               patient.id,
@@ -82,8 +82,8 @@ export class DiagnosisController {
   ) {
     try {
       const { nid } = req.params;
-      const { userId } = req.body;
-      const doctor = await UserModules.findUserById(userId);
+      const { id } = req.user;
+      const doctor = await UserModules.findUserById(id);
 
       if (!nid) {
         throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
@@ -98,8 +98,8 @@ export class DiagnosisController {
 
       if (
         !patient.openAccess &&
-        req.body.role !== "admin" &&
-        patient.id !== userId
+        req.user.role !== "admin" &&
+        patient.id !== id
       ) {
         const hasPermissions =
           await PermissionsModule.checkPermissionValidation(

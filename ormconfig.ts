@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm";
 import dotenv from "dotenv";
+import path from "path";
 dotenv.config();
 
 export const AppDataSource = new DataSource({
@@ -9,17 +10,17 @@ export const AppDataSource = new DataSource({
   username: process.env['DB_USER'] || 'postgres',
   password: process.env['DB_PASS'] || '',
   database: process.env['DB_NAME'] || 'database',
-  synchronize: true,
+  synchronize: process.env['ENV_MODE'] === "development" ? true : false,
   ssl: true,
   logging: true,
   entities:
     process.env['ENV_MODE'] === "development"
       ? ["src/entities/*.ts"]
-      : ["dist/src/entities/*.js"],
+      : [path.join(__dirname, "dist/src/entities/*.js")],
   migrations:
     process.env['ENV_MODE'] === "development"
       ? ["src/migrations/*.ts"]
-      : ["dist/src/migrations/*.js"],
+      : [path.join(__dirname, "dist/src/migrations/*.js")],
   subscribers: [],
   schema: "public",
 });

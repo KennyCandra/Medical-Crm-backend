@@ -11,55 +11,55 @@ import PermissionsModule from "../modules/PermissionsModule";
 import prescriptionModule from "../modules/PrescriptionModule";
 import { verifyToken } from "../helpers/verifyToken";
 import { RefreshToken } from "../entities/refreshToken";
-
+import UserCaching from "../Caching/UserCaching";
 
 export default class AuthService {
+
     static async signUp(data: any) {
         return await runInTransaction(async (manager) => {
-            try {
-                const {
-                    firstName,
-                    lastName,
-                    gender,
-                    nid,
-                    password,
-                    role,
-                    birth_date,
-                    blood_type,
-                    email,
-                    speciality,
-                    license
-                } = data;
+            const {
+                firstName,
+                lastName,
+                gender,
+                nid,
+                password,
+                role,
+                birth_date,
+                blood_type,
+                email,
+                speciality,
+                license
+            } = data;
 
-                let newUser = await UserModules.createUser(
-                    firstName,
-                    lastName,
-                    gender,
-                    nid,
-                    role,
-                    password,
-                    email,
-                    birth_date,
-                    blood_type
-                );
+            let newUser = await UserModules.createUser(
+                firstName,
+                lastName,
+                gender,
+                nid,
+                role,
+                password,
+                email,
+                birth_date,
+                blood_type
+            );
 
-                await manager.save(newUser);
+            await manager.save(newUser);
 
-                if (role === "doctor") {
-                    const doctor = await DoctorProfileModules.createDoctor({
-                        user: newUser,
-                        license: license,
-                        specialization: speciality,
-                    });
-
-                    await manager.save(doctor);
+            if (role === "doctor") {
+                if (!speciality || !license) {
+                    throw createHttpError(StatusCodes.BAD_REQUEST, "speciality and license are required");
                 }
+                const doctor = await DoctorProfileModules.createDoctor({
+                    user: newUser,
+                    license: license,
+                    specialization: speciality,
+                });
 
-                let returnedUser: UpdatedUser = userWithoutImportantData(newUser);
-                return returnedUser;
-            } catch (error) {
-                throw error;
+                await manager.save(doctor);
             }
+
+            let returnedUser: UpdatedUser = userWithoutImportantData(newUser);
+            return returnedUser;
         });
     }
 
@@ -86,12 +86,12 @@ export default class AuthService {
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
                 const errObject = {
-                    status: StatusCodes.NOT_FOUND,
-                    message: ReasonPhrases.NOT_FOUND,
+                    status: StatusCodes.UNAUTHORIZED,
+                    message: ReasonPhrases.UNAUTHORIZED,
                     error: [
                         {
-                            field: "NID",
-                            message: "user not found",
+                            field: "password",
+                            message: "password is incorrect",
                         }
                     ]
                 }
@@ -103,14 +103,13 @@ export default class AuthService {
             const refreshTokenSnippet = refreshToken.split(".")[2];
             const refreshTokenEntity = await RefreshTokenModule.createRefreshToken(
                 user,
-                refreshTokenSnippet!
+                refreshTokenSnippet as string
             );
             const userWithNoData = userWithoutImportantData(user)
             await manager.save(refreshTokenEntity);
             return { refreshToken, accessToken, userWithNoData }
         })
     }
-
 
     static async SearchPatients(data: any) {
         const { nid } = data
@@ -140,9 +139,15 @@ export default class AuthService {
             throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
         }
 
+        let [user, doctor] = await Promise.all([
+            UserModules.fetchAllUserDataWithNid(nid),
+            UserModules.findUserById(userId)
+        ]);
 
-        let user = await UserModules.fetchAllUserDataWithNid(nid);
-        const doctor = await UserModules.findUserById(userId);
+        if (!user || !doctor) {
+            throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+        }
+
         const hasPermission = await PermissionsModule.checkPermissionValidation(
             user.id,
             doctor.doctorProfile?.id!,
@@ -159,11 +164,17 @@ export default class AuthService {
             throw createHttpError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
         }
 
+        const cache = await UserCaching.getUser(user.NID);
+        if (cache) {
+            console.log("cached user", cache);
+            return cache;
+        }
+
         const { prescriptions, numbers } =
             await prescriptionModule.fetchLimitedPrescriptions(user.id);
 
 
-        let returnedUser : UpdatedUser = userWithoutImportantData(user);
+        const { patientDiagnoses, password, email, openAccess , patientAllergies, ...returnedUser } = user
         let modifiedPrescriptions = prescriptions.map((presc) => {
             return {
                 id: presc.id,
@@ -180,7 +191,7 @@ export default class AuthService {
             done: numbers.done,
             total: numbers.total,
         };
-        const diagnoses = user.patientDiagnoses.map((diagnosis) => ({
+        const diagnoses = patientDiagnoses.map((diagnosis) => ({
             id: diagnosis.id,
             name: diagnosis.disease.name,
         }));
@@ -190,7 +201,7 @@ export default class AuthService {
                 index === self.findIndex((t) => t.name === diagnosis.name)
         );
 
-        const allergies = user.patientAllergies.map((allergy) => ({
+        const allergies = patientAllergies.map((allergy) => ({
             id: allergy.id,
             name: allergy.allergy.name,
         }));
@@ -200,32 +211,32 @@ export default class AuthService {
                 index === self.findIndex((t) => t.name === allergy.name)
         );
 
-        return { returnedUser, modifiedPrescriptionsToResponse, filterDiseasesToOneDisease, filterAllergiesToOneAllergy }
+        const result = { returnedUser, modifiedPrescriptionsToResponse, filterDiseasesToOneDisease, filterAllergiesToOneAllergy }
+        await UserCaching.setUser(user.NID, result);
+
+        console.log("result", result);
+        return result
     }
 
     static async refreshToken(refreshTokenFromCookie: string) {
         return await runInTransaction(async (manager) => {
             if (!refreshTokenFromCookie) {
-                throw createHttpError(StatusCodes.UNAUTHORIZED, "the refreshToken is not found");
+                throw createHttpError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
             }
 
-            const token = await verifyToken(refreshTokenFromCookie);
+            const token = await verifyToken(refreshTokenFromCookie, "refresh");
 
             if (token.expired) {
-                throw createHttpError(StatusCodes.UNAUTHORIZED, "the refreshToken is expired");
+                throw createHttpError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
             }
 
             const refreshTokenSignature = refreshTokenFromCookie.split(".")[2];
             const refreshTokenEntity = await RefreshTokenModule.findRefreshToken(
-                refreshTokenSignature!
+                refreshTokenSignature as string
             );
 
-            if (!refreshTokenEntity) {
-                throw createHttpError(StatusCodes.UNAUTHORIZED, "the refreshToken is not found");
-            }
-
-            if (refreshTokenEntity.expiresAt < new Date()) {
-                throw createHttpError(StatusCodes.UNAUTHORIZED, "the refreshToken is expired");
+            if (!refreshTokenEntity || refreshTokenEntity.expiresAt < new Date()) {
+                throw createHttpError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
             }
 
             let user = refreshTokenEntity.user;
@@ -235,15 +246,17 @@ export default class AuthService {
                 CreateAuthenticationToken(user);
 
             const newRefreshTokenSignature = newRefreshToken.split(".")[2];
+
             const newRefreshTokenEntity =
                 await RefreshTokenModule.createRefreshToken(
                     user,
-                    newRefreshTokenSignature!
+                    newRefreshTokenSignature as string
                 );
 
             await manager.delete(RefreshToken, {
                 tokenSignature: refreshTokenSignature,
             });
+
             await manager.save(newRefreshTokenEntity);
 
             return {

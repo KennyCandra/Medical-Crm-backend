@@ -3,7 +3,7 @@ import { DoctorProfile } from "./doctorProfile";
 import { Prescription } from "./prescription";
 import { Diagnosis } from "./diagnosis";
 import { Pallergy } from "./Pallergy";
-import { ReportsEntity } from "./ReportsEntity";
+import { Reports } from "./Reports";
 import { PasswordResetToken } from "./resetPw";
 import { DefaultDocument } from "./NormalDocument";
 import { RefreshToken } from "./refreshToken";
@@ -38,7 +38,7 @@ export class User extends DefaultDocument {
   })
   role: "doctor" | "patient" | "admin" | "ed" | "researcher";
 
-  @OneToOne(() => DoctorProfile, (profile) => profile.user, { 
+  @OneToOne(() => DoctorProfile, (profile) => profile.user, {
     nullable: true,
     cascade: ['remove', 'update'],
     onDelete: 'CASCADE'
@@ -77,11 +77,11 @@ export class User extends DefaultDocument {
   })
   patientDiagnoses: Diagnosis[];
 
-  @OneToMany(() => ReportsEntity, (reports) => reports.patient, {
+  @OneToMany(() => Reports, (reports) => reports.patient, {
     cascade: ['remove', 'update'],
     onDelete: 'CASCADE'
   })
-  reports: ReportsEntity[];
+  reports: Reports[];
 
   @OneToMany(() => Pallergy, (Pallergy) => Pallergy.patient, {
     cascade: ['remove', 'update'],
@@ -110,11 +110,11 @@ export class User extends DefaultDocument {
   })
   notifications: Notification[];
 
-  @OneToMany(() => ReportsEntity, (reports) => reports.reporter, {
+  @OneToMany(() => Reports, (reports) => reports.reporter, {
     cascade: ['remove', 'update'],
     onDelete: 'CASCADE'
   })
-  reportedBy: ReportsEntity[];
+  reportedBy: Reports[];
 
   @OneToMany(() => Permission, (permission) => permission.patient, {
     cascade: ['remove', 'update'],

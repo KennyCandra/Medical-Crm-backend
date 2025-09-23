@@ -11,7 +11,7 @@ import { DefaultDocument } from "./NormalDocument";
 @Index("idx_disease_name", ["name"])
 export class Disease extends DefaultDocument {
 
-  @Column({ type: "citext", unique: true, nullable: true })
+  @Column({ type: "citext", unique: true, nullable: false })
   name: string;
 
   @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.disease)

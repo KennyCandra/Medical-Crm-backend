@@ -3,7 +3,7 @@ import { PrescribedDrug } from "./prescribedDrug";
 import { User } from "./user";
 import { DefaultDocument } from "./NormalDocument";
 @Entity()
-export class ReportsEntity extends DefaultDocument {
+export class Reports extends DefaultDocument {
 
     @Column({ nullable: false })
     description: string;

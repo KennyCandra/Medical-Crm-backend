@@ -6,8 +6,8 @@ import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 export default class UserModules {
   static async createUser(
-    fName: string,
-    lName: string,
+    firstName: string,
+    lastName: string,
     gender: "male" | "female",
     NID: string,
     role: "patient" | "doctor",
@@ -25,125 +25,82 @@ export default class UserModules {
       | "O-"
       | "unknown"
   ) {
-    try {
-      const hashedPw = await bcrypt.hash(password, 12);
-      const newUser = new User();
-      newUser.NID = NID;
-      newUser.first_name = fName;
-      newUser.gender = gender;
-      newUser.last_name = lName;
-      newUser.role = role;
-      newUser.password = hashedPw;
-      newUser.birth_date = new Date(birth_date!) ?? new Date();
-      newUser.blood_type = blood_type!;
-      newUser.email = email;
 
-      return newUser;
-    } catch (err) {
-      throw err;
-    }
+    const hashedPw = await bcrypt.hash(password, 12);
+    const newUser = new User();
+    newUser.NID = NID;
+    newUser.first_name = firstName;
+    newUser.gender = gender;
+    newUser.last_name = lastName;
+    newUser.role = role;
+    newUser.password = hashedPw;
+    newUser.birth_date = new Date(birth_date!) ?? new Date();
+    newUser.blood_type = blood_type!;
+    newUser.email = email;
+
+    return newUser;
   }
 
   static async findUserByNid(nid: string) {
-    try {
-      const user = await AppDataSource.getRepository(User)
-        .createQueryBuilder("user")
-        .where("user.NID = :nid", { nid })
-        .leftJoinAndSelect("user.doctorProfile", "doctor")
-        .getOne();
-      return user;
-    } catch (err) {
-      console.log(err);
-      throw createHttpError(
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        ReasonPhrases.INTERNAL_SERVER_ERROR
-      );
-    }
+    const user = await AppDataSource.getRepository(User)
+      .createQueryBuilder("user")
+      .where("user.NID = :nid", { nid })
+      .leftJoinAndSelect("user.doctorProfile", "doctor")
+      .getOne();
+    return user
   }
 
   static async findUserByEmail(email: string) {
-    try {
-      const user = await AppDataSource.getRepository(User)
-        .createQueryBuilder("user")
-        .where("user.email = :email", { email })
-        .getOne();
-      return user;
-    } catch (err) {
-      console.log(err);
-      throw createHttpError(
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        ReasonPhrases.INTERNAL_SERVER_ERROR
-      );
-    }
+
+    const user = await AppDataSource.getRepository(User)
+      .createQueryBuilder("user")
+      .where("user.email = :email", { email })
+      .getOne();
+    return user;
   }
 
   static async findUserById(id: string) {
-    try {
-      const user = await AppDataSource.getRepository(User)
-        .createQueryBuilder("user")
-        .where("user.id = :id", { id })
-        .leftJoinAndSelect("user.doctorProfile", "doctor")
-        .getOne();
 
-      if (!user || !user.doctorProfile) {
-        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
-      }
+    const user = await AppDataSource.getRepository(User)
+      .createQueryBuilder("user")
+      .where("user.id = :id", { id })
+      .leftJoinAndSelect("user.doctorProfile", "doctor")
+      .getOne();
 
-      return user;
-    } catch (err) {
-      console.log(err);
-      throw createHttpError(
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        ReasonPhrases.INTERNAL_SERVER_ERROR
-      );
+    if (!user || !user.doctorProfile) {
+      throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
     }
+
+    return user;
   }
 
   static async searchUsersByNid(nid: string) {
-    try {
-      const users = await AppDataSource.getRepository(User)
-        .createQueryBuilder("user")
-        .where("user.NID LIKE :nid", { nid: `${nid}%` })
-        .andWhere("user.role != :role", { role: "admin" })
-        .select([
-          "user.id AS id",
-          "user.NID AS NID",
-          "user.first_name AS first_name",
-          "user.last_name AS last_name",
-        ])
-        .getRawMany();
-      return users;
-    } catch (err) {
-      throw createHttpError(
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        ReasonPhrases.INTERNAL_SERVER_ERROR
-      );
-    }
+    const users = await AppDataSource.getRepository(User)
+      .createQueryBuilder("user")
+      .where("user.NID LIKE :nid", { nid: `${nid}%` })
+      .andWhere("user.role != :role", { role: "admin" })
+      .select([
+        "user.id AS id",
+        "user.NID AS NID",
+        "user.first_name AS first_name",
+        "user.last_name AS last_name",
+      ])
+      .getRawMany();
+    return users;
   }
 
 
   static async fetchAllUserDataWithNid(nid: string) {
-    try {
-      const user = await AppDataSource.getRepository(User)
-        .createQueryBuilder("user")
-        .where("user.NID = :nid", { nid })
-        .leftJoinAndSelect("user.patientDiagnoses", "diagnoses")
-        .leftJoinAndSelect("diagnoses.disease", "disease")
-        .leftJoinAndSelect("user.patientAllergies", "allergies")
-        .leftJoinAndSelect("allergies.allergy", "allergy")
-        .getOne();
 
-      if (!user) {
-        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
-      }
+    const user = await AppDataSource.getRepository(User)
+      .createQueryBuilder("user")
+      .where("user.NID = :nid", { nid })
+      .leftJoinAndSelect("user.patientDiagnoses", "diagnoses")
+      .leftJoinAndSelect("diagnoses.disease", "disease")
+      .leftJoinAndSelect("user.patientAllergies", "allergies")
+      .leftJoinAndSelect("allergies.allergy", "allergy")
+      .getOne();
 
-      return user;
-    }
-    catch (err) {
-      throw createHttpError(
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        ReasonPhrases.INTERNAL_SERVER_ERROR
-      );
-    }
+    return user;
   }
 }

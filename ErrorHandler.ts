@@ -10,6 +10,8 @@ export default function ErrorHandler(
     res: Response,
     _next: NextFunction
 ): void {
+
+    console.error(err);
     if (typeof err === "object" && err !== null && "detail" in err) {
         handlePostgresError(err as DatabaseError, res);
         return

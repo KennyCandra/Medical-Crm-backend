@@ -24,7 +24,8 @@ export default class PrescriptionController {
     res: Response,
     next: NextFunction
   ) {
-    const { doctorId, patientId, medication, description, userId } = req.body;
+    const { doctorId, patientId, medication, description } = req.body;
+    const userId = req.user.id;
     try {
       const newPrescrition = await runInTransaction(async (manager) => {
         let prescribedDrugs: PrescribedDrug[] = [];
@@ -45,7 +46,7 @@ export default class PrescriptionController {
 
         if (
           !patient.openAccess &&
-          req.body.role !== "admin" &&
+          req.user.role !== "admin" &&
           patient.id !== userId
         ) {
           const hasPermission =
@@ -116,10 +117,10 @@ export default class PrescriptionController {
   ) {
     try {
       const { prescriptionId } = req.params;
-      const { userId } = req.body;
+      const { id } = req.user;
       const [prescription, patient] = await Promise.all([
         await prescriptionModule.findPrescription(prescriptionId!, ["patient"]),
-        await UserModules.findUserById(userId),
+        await UserModules.findUserById(id),
       ]);
 
       if (!prescription) {
@@ -206,7 +207,7 @@ export default class PrescriptionController {
 
       let prescriptions: Prescription[] = [];
 
-      if (user?.id !== req.body.userId && req.body.role !== "doctor") {
+      if (user?.id !== req.user.id && req.user.role !== "doctor") {
         throw createhttperror(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
       }
 
