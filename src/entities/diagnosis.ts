@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import { Entity, Column, ManyToOne } from "typeorm";
 import { Disease } from "./disease";
 import { DoctorProfile } from "./doctorProfile";
 import { User } from "./user";
@@ -21,7 +21,10 @@ export class Diagnosis extends DefaultDocument {
     @ManyToOne(() => DoctorProfile, (profile) => profile.diagnoses)
     doctor: DoctorProfile
 
-    @ManyToOne(() => Disease, (disease) => disease.diagnoses)
+    @ManyToOne(() => Disease, (disease) => disease.diagnoses, {
+        nullable: true,
+        onDelete: 'SET NULL'
+    })
     disease: Disease
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

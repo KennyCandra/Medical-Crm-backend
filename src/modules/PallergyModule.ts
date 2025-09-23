@@ -4,10 +4,6 @@ import { Pallergy } from "../entities/Pallergy"
 import { User } from "../entities/user"
 import createhttperror from 'http-errors'
 
-interface PallergyCreation {
-    allergyName: string;
-}
-
 export default class PallergyModule {
     static async PallergyCreation(patient: User,
         allergy: Allergy) {

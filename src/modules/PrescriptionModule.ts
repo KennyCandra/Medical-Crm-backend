@@ -17,90 +17,80 @@ class prescriptionModule {
     doctor: DoctorProfile;
     prescribedDrug: PrescribedDrug[];
   }) {
-    try {
-      const newPrescrition = new Prescription();
-      newPrescrition.doctor = doctor;
-      newPrescrition.patient = { id: patient } as User;
-      newPrescrition.prescribedDrugs = prescribedDrug;
-      newPrescrition.description = description;
-      newPrescrition.start_date = new Date();
+    const newPrescrition = new Prescription();
+    newPrescrition.doctor = doctor;
+    newPrescrition.patient = { id: patient } as User;
+    newPrescrition.prescribedDrugs = prescribedDrug;
+    newPrescrition.description = description;
+    newPrescrition.start_date = new Date();
 
-      return newPrescrition;
-    } catch (err) {
-      throw new createhttperror.InternalServerError["internal server error"]();
-    }
+    return newPrescrition;
+
   }
 
   static async findPrescription(
     prescriptionId: string,
     relations: string[] = []
   ) {
-    try {
-      const queryBuilder = AppDataSource.getRepository(Prescription)
-        .createQueryBuilder("prescription")
-        .where("prescription.id = :id", { id: prescriptionId });
+    const queryBuilder = AppDataSource.getRepository(Prescription)
+      .createQueryBuilder("prescription")
+      .where("prescription.id = :id", { id: prescriptionId });
 
-      if (relations.includes("patient")) {
-        queryBuilder.leftJoinAndSelect("prescription.patient", "patient");
-      }
-
-      if (relations.includes("doctor")) {
-        queryBuilder.leftJoinAndSelect("prescription.doctor", "doctor");
-
-        if (relations.includes("doctor.user")) {
-          queryBuilder.leftJoinAndSelect("doctor.user", "doctorUser");
-        }
-      }
-
-      if (relations.includes("prescribedDrugs")) {
-        queryBuilder.leftJoinAndSelect(
-          "prescription.prescribedDrugs",
-          "prescribedDrugs"
-        );
-
-        if (relations.includes("prescribedDrugs.drug")) {
-          queryBuilder.leftJoinAndSelect("prescribedDrugs.drug", "drug");
-        }
-      }
-      const prescription = await queryBuilder.getOne();
-      return prescription;
-    } catch (err) {
-      throw err;
+    if (relations.includes("patient")) {
+      queryBuilder.leftJoinAndSelect("prescription.patient", "patient");
     }
+
+    if (relations.includes("doctor")) {
+      queryBuilder.leftJoinAndSelect("prescription.doctor", "doctor");
+
+      if (relations.includes("doctor.user")) {
+        queryBuilder.leftJoinAndSelect("doctor.user", "doctorUser");
+      }
+    }
+
+    if (relations.includes("prescribedDrugs")) {
+      queryBuilder.leftJoinAndSelect(
+        "prescription.prescribedDrugs",
+        "prescribedDrugs"
+      );
+
+      if (relations.includes("prescribedDrugs.drug")) {
+        queryBuilder.leftJoinAndSelect("prescribedDrugs.drug", "drug");
+      }
+    }
+    const prescription = await queryBuilder.getOne();
+    return prescription;
+
   }
 
-  static async findManyPrescriptions(doctorId: string, patientId: string) {
-    try {
-      const queryBuilder =
-        AppDataSource.getRepository(Prescription).createQueryBuilder(
-          "prescription"
-        );
+  static async findManyPrescriptions(doctorId: string | null, patientId: string | null) {
+    const queryBuilder =
+      AppDataSource.getRepository(Prescription).createQueryBuilder(
+        "prescription"
+      );
 
-      if (doctorId) {
-        queryBuilder.where("prescription.doctor = :doctorId", { doctorId });
-      } else {
-        queryBuilder.where("prescription.patient = :patientId", { patientId });
-      }
-
-      queryBuilder
-        .leftJoinAndSelect("prescription.doctor", "doctor")
-        .leftJoinAndSelect("prescription.patient", "patient")
-        .leftJoinAndSelect("doctor.user", "doctorProfile")
-        .orderBy(
-          "CASE WHEN prescription.status = 'taking' THEN 1 WHEN prescription.status = 'done' THEN 2 END",
-          "ASC"
-        )
-        .addOrderBy("prescription.start_date", "DESC");
-
-      const prescriptions = await queryBuilder.getMany();
-      return prescriptions;
-    } catch (err) {
-      throw err;
+    if (doctorId) {
+      queryBuilder.where("prescription.doctor = :doctorId", { doctorId });
+    } else {
+      queryBuilder.where("prescription.patient = :patientId", { patientId });
     }
+
+    queryBuilder
+      .leftJoinAndSelect("prescription.doctor", "doctor")
+      .leftJoinAndSelect("prescription.patient", "patient")
+      .leftJoinAndSelect("doctor.user", "doctorProfile")
+      .orderBy(
+        "CASE WHEN prescription.status = 'taking' THEN 1 WHEN prescription.status = 'done' THEN 2 END",
+        "ASC"
+      )
+      .addOrderBy("prescription.start_date", "DESC");
+
+    const prescriptions = await queryBuilder.getMany();
+    return prescriptions;
   }
 
   static async fetchDrugsFromPrescriptinsWithStatusTakingForSinglePatient(
-    patientId
+    patientId: string
   ) {
     try {
       const prescriptions = await AppDataSource.getRepository(Prescription)

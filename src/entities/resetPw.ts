@@ -13,7 +13,10 @@ export class PasswordResetToken extends DefaultDocument {
     @Column({ default: false })
     used: boolean;
 
-    @ManyToOne(() => User, { nullable: false })
+    @ManyToOne(() => User, { 
+        nullable: false,
+        onDelete: 'CASCADE'
+    })
     @JoinColumn()
     user: User;
 }

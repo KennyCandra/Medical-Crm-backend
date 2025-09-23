@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Entity, Column, OneToMany } from "typeorm";
 import { Drug } from "./drug";
 import { DefaultDocument } from "./NormalDocument";
 

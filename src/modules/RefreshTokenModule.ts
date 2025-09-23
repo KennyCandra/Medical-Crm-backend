@@ -21,10 +21,10 @@ export default class RefreshTokenModule {
   ): Promise<RefreshToken | null> {
     await this.cleanExpiredTokens();
     return await AppDataSource.getRepository(RefreshToken).createQueryBuilder("refreshToken")
-    .leftJoinAndSelect("refreshToken.user", "user")
-    .where("refreshToken.tokenSignature = :tokenSignature", { tokenSignature })
-    .leftJoinAndSelect("user.doctorProfile", "doctorProfile")
-    .getOne();
+      .leftJoinAndSelect("refreshToken.user", "user")
+      .where("refreshToken.tokenSignature = :tokenSignature", { tokenSignature })
+      .leftJoinAndSelect("user.doctorProfile", "doctorProfile")
+      .getOne();
   }
 
   static async cleanExpiredTokens(): Promise<void> {
@@ -40,4 +40,5 @@ export default class RefreshTokenModule {
       },
     });
   }
+  
 }

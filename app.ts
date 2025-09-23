@@ -1,33 +1,33 @@
 import dotenv from "dotenv";
 dotenv.config();
+import "reflect-metadata";
 import express from "express";
 import { AppDataSource } from "./ormconfig";
-import { Response, Request, NextFunction, ErrorRequestHandler } from "express";
-import createHttpError from "http-errors";
 import cors from "cors";
-import AuthRoutes from "./src/routes/Auth";
-import DiagnosisRoutes from "./src/routes/Diagnosis";
-import SpecializationRoutes from "./src/routes/Specializations";
-import PrescriptoinRoutes from "./src/routes/Prescription";
-import DrugRoutes from "./src/routes/Drug";
+import AuthRoutes from "./src/routes/AuthRoute";
+import DiagnosisRoutes from "./src/routes/DiagnosisRoute";
+import SpecializationRoutes from "./src/routes/SpecializationsRoute";
+import PrescriptoinRoutes from "./src/routes/PrescriptionRoute";
+import DrugRoutes from "./src/routes/DrugRoute";
 import cookiesParser from "cookie-parser";
-import DiseaseRoutes from "./src/routes/Disease";
-import AllergyRoutes from "./src/routes/Allergies";
-import ReportRouter from "./src/routes/ReportsController";
-import { ReasonPhrases, StatusCodes } from "http-status-codes";
-import AdminRoutes from "./src/routes/Admin";
+import DiseaseRoutes from "./src/routes/DiseaseRoute";
+import AllergyRoutes from "./src/routes/AllergiesRoute";
+import ReportRouter from "./src/routes/ReportsRoute";
+import AdminRoutes from "./src/routes/AdminRoute";
 import Auth from "./src/middleware/middleware";
 import { AnalyticsController } from "./src/controllers/AnalyticsController";
 import { createServer } from "http";
 import SocketManager from "./socket";
 import NotificationRoutes from "./src/routes/NotificationRoutes";
+import PermissionsRoute from "./src/routes/permissionRoute";
+import ErrorHandler from './ErrorHandler'
 
 const app = express();
 app.use(express.json());
 app.use(cookiesParser());
 const server = createServer(app);
 
-const allowedOrigins = ["http://localhost:5173", process.env.FRONTED_URL];
+const allowedOrigins = ["http://localhost:5173", process.env['FRONTED_URL']];
 
 app.use(
   cors({
@@ -54,37 +54,19 @@ app.use("/presc", PrescriptoinRoutes);
 app.use("/drug", DrugRoutes);
 app.use("/allergy", AllergyRoutes);
 app.use("/reports", ReportRouter);
-app.use("/admin", Auth.checkToken, Auth.checkRoles(["owner"]), AdminRoutes);
+app.use("/admin", Auth.checkToken, AdminRoutes);
 app.use("/notification", Auth.checkToken, NotificationRoutes);
 app.get("/analytics/:diseaseId", AnalyticsController.specificDiseaseAnalytics);
+app.use("/permission-request", PermissionsRoute);
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("Hello World");
 });
 
-app.use(
-  (
-    err: ErrorRequestHandler,
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    let status: number = StatusCodes.INTERNAL_SERVER_ERROR;
-    let message: string = ReasonPhrases.INTERNAL_SERVER_ERROR;
-
-    if (createHttpError.isHttpError(err)) {
-      status = err.statusCode;
-      message = err.message;
-    }
-    res.status(status).json({ message: message });
-    return;
-  }
-);
-
-
+app.use(ErrorHandler);
 
 AppDataSource.initialize().then(() => {
-  const port = Number(process.env.DB_PORT_SERVER);
+  const port = Number(process.env['DB_PORT_SERVER']);
   server.listen(port, "0.0.0.0", () => {
     console.log("started our first server on port", port);
     SocketManager.connect(server, allowedOrigins as string[]);

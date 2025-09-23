@@ -11,7 +11,10 @@ export class Category extends DefaultDocument {
     @Column({ nullable: true })
     description: string;
 
-    @OneToMany(() => Classification, classification => classification.category)
+    @OneToMany(() => Classification, classification => classification.category, {
+        cascade: ['remove', 'update'],
+        onDelete: 'CASCADE'
+    })
     classifications: Classification[];
 }
 

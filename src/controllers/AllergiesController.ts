@@ -15,6 +15,9 @@ export default class AllergiesController {
   ) {
     try {
       const { nid } = req.params;
+      if (!nid) {
+        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+      }
       const patient = await UserModules.findUserByNid(nid);
       if (!patient) {
         throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
@@ -33,10 +36,17 @@ export default class AllergiesController {
 
   static async addAllergy(req: Request, res: Response, next: NextFunction) {
     try {
-      const { userId, values } = req.body;
+      const { values } = req.body;
+      const userId = req.user.id;
       const patient = await UserModules.findUserById(userId);
       if (!patient) {
         throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+      }
+
+      const patientAllergies = await PallergyModule.findForPatient(patient.id);
+
+      if (patientAllergies.some((a) => a.allergy.id === values.allergyId)) {
+        throw createhttperror(StatusCodes.CONFLICT, ReasonPhrases.CONFLICT);
       }
       const allergy = await AllergyModule.findAllergyById(values.allergyId);
       if (!allergy) {
@@ -55,9 +65,13 @@ export default class AllergiesController {
     }
   }
 
-  static async removePllergy(req: Request, res: Response, next: NextFunction) {
+  static async removePallergy(req: Request, res: Response, next: NextFunction) {
     try {
       const { pallergyId } = req.params;
+
+      if (!pallergyId) {
+        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+      }
       await PallergyModule.removePallergy(pallergyId);
       res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
     } catch (error) {
@@ -72,6 +86,10 @@ export default class AllergiesController {
   ) {
     try {
       const { allergyText } = req.params;
+      if (!allergyText) {
+        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+      }
+
       const allergy = await AllergyModule.fetchSpecificAllergy(allergyText);
       res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, allergy });
     } catch (error) {

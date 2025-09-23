@@ -1,7 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany } from "typeorm";
+import { Entity, ManyToOne, JoinColumn, Column, OneToMany } from "typeorm";
 import { Prescription } from "./prescription";
 import { Drug } from "./drug";
-import { ReportsEntity } from "./ReportsEntity";
+import { Reports } from "./Reports";
 import { DefaultDocument } from "./NormalDocument";
 @Entity()
 export class PrescribedDrug extends DefaultDocument {
@@ -13,11 +13,17 @@ export class PrescribedDrug extends DefaultDocument {
     @JoinColumn()
     prescription: Prescription;
 
-    @OneToMany(() => ReportsEntity, (reports) => reports.prescribedDrug)
+    @OneToMany(() => Reports, (reports) => reports.prescribedDrug, {
+        cascade: ['remove', 'update'],
+        onDelete: 'CASCADE'
+    })
     @JoinColumn()
-    reports: Report[];
+    reports: Reports[];
 
-    @ManyToOne(() => Drug, (drug) => drug.prescribedDrugs)
+    @ManyToOne(() => Drug, (drug) => drug.prescribedDrugs, {
+        nullable: true,
+        onDelete: 'SET NULL'
+    })
     drug: Drug;
 
     @Column({ nullable: false })

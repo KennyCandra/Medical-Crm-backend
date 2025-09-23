@@ -1,13 +1,14 @@
-import { Entity, Column, OneToOne, OneToMany, ManyToOne, Index } from "typeorm";
+import { Entity, Column, OneToOne, OneToMany, Index } from "typeorm";
 import { DoctorProfile } from "./doctorProfile";
 import { Prescription } from "./prescription";
 import { Diagnosis } from "./diagnosis";
 import { Pallergy } from "./Pallergy";
-import { ReportsEntity } from "./ReportsEntity";
+import { Reports } from "./Reports";
 import { PasswordResetToken } from "./resetPw";
 import { DefaultDocument } from "./NormalDocument";
 import { RefreshToken } from "./refreshToken";
 import { Notification } from "./Notification";
+import Permission from "./Permissions";
 
 @Entity()
 export class User extends DefaultDocument {
@@ -32,12 +33,16 @@ export class User extends DefaultDocument {
 
   @Column({
     type: "enum",
-    enum: ["doctor", "patient", "owner"],
+    enum: ["doctor", "patient", "admin", "ed", "researcher"],
     nullable: false,
   })
-  role: "doctor" | "patient" | "owner";
+  role: "doctor" | "patient" | "admin" | "ed" | "researcher";
 
-  @OneToOne(() => DoctorProfile, (profile) => profile.user, { nullable: true })
+  @OneToOne(() => DoctorProfile, (profile) => profile.user, {
+    nullable: true,
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
   doctorProfile?: DoctorProfile;
 
   @Column({
@@ -57,30 +62,64 @@ export class User extends DefaultDocument {
     | "O-"
     | "unknown";
 
-  @OneToMany(() => Prescription, (prescription) => prescription.patient)
+  @Column({ default: false })
+  openAccess: boolean;
+
+  @OneToMany(() => Prescription, (prescription) => prescription.patient, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
   prescriptions: Prescription[];
 
-  @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.patient)
+  @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.patient, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
   patientDiagnoses: Diagnosis[];
 
-  @OneToMany(() => ReportsEntity, (reports) => reports.patient)
-  reports: ReportsEntity[];
+  @OneToMany(() => Reports, (reports) => reports.patient, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
+  reports: Reports[];
 
-  @OneToMany(() => Pallergy, (Pallergy) => Pallergy.patient)
+  @OneToMany(() => Pallergy, (Pallergy) => Pallergy.patient, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
   patientAllergies: Pallergy[];
 
   @Column({ nullable: false, unique: true })
   email: string;
 
-  @OneToMany(() => PasswordResetToken, (token) => token.user)
+  @OneToMany(() => PasswordResetToken, (token) => token.user, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
   passwordResetTokens: PasswordResetToken[];
 
-  @OneToMany(() => RefreshToken, (token) => token.user)
+  @OneToMany(() => RefreshToken, (token) => token.user, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
   refreshTokens: RefreshToken[];
 
-  @OneToMany(() => Notification, (notification) => notification.user)
+  @OneToMany(() => Notification, (notification) => notification.user, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
   notifications: Notification[];
 
-  @OneToMany(() => ReportsEntity, (reports) => reports.reporter)
-  reportedBy: ReportsEntity[];
+  @OneToMany(() => Reports, (reports) => reports.reporter, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
+  reportedBy: Reports[];
+
+  @OneToMany(() => Permission, (permission) => permission.patient, {
+    cascade: ['remove', 'update'],
+    onDelete: 'CASCADE'
+  })
+  permissions: Permission[];
+
 }

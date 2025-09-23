@@ -1,11 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../helpers/verifyToken";
-import { StatusCodes, ReasonPhrases } from "http-status-codes";
+import { ResponseHelper } from "../utils/ResponseHelper";
 
 declare module "express-serve-static-core" {
   interface Request {
     Authorization: string;
-    userId: string;
+    user: {
+      role: string;
+      id: string
+    }
   }
 }
 
@@ -20,22 +23,20 @@ class Auth {
     try {
       const accessToken = req.get("Authorization");
       if (!accessToken) {
-        res
-          .status(StatusCodes.UNAUTHORIZED)
-          .json({ message: ReasonPhrases.UNAUTHORIZED });
+        ResponseHelper.unauthorized(res);
         return;
       }
 
-      const { decodedToken, expired } = await verifyToken(accessToken);
+      const { decodedToken, expired } = await verifyToken(accessToken, "access");
 
       if (expired) {
-        res
-          .status(StatusCodes.UNAUTHORIZED)
-          .json({ message: ReasonPhrases.UNAUTHORIZED });
+        ResponseHelper.unauthorized(res);
         return;
       }
-      req.body.role = (decodedToken as DecodedToken).role;
-      req.body.userId = (decodedToken as DecodedToken).userId;
+      req.user = {
+        role: (decodedToken as DecodedToken).role,
+        id: (decodedToken as DecodedToken).userId
+      }
       next();
     } catch (error) {
       next(error);
@@ -44,16 +45,14 @@ class Auth {
 
   static checkRoles(allowedRoles: string[]) {
     return async (req: Request, res: Response, next: NextFunction) => {
-      const { role } = req.body;
-      if (role === "owner") {
+      const { role } = req.user;
+      if (role === "admin") {
         next();
         return;
       }
 
       if (!allowedRoles.includes(role)) {
-        res
-          .status(StatusCodes.FORBIDDEN)
-          .json({ message: ReasonPhrases.FORBIDDEN });
+        ResponseHelper.forbidden(res);
         return;
       }
       next();

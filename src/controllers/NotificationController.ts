@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import NotificationModule from "../modules/NotificationModule";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { AppDataSource } from "../../ormconfig";
+import createHttpError from 'http-errors'
 
 export default class NotificationController {
   static async getNotifications(
@@ -10,7 +11,7 @@ export default class NotificationController {
     next: NextFunction
   ) {
     try {
-      const userId = req.body.userId;
+      const userId = req.user.id;
       const notifications = await NotificationModule.getNotifications(userId);
       const notReadNotificationsLength = notifications.filter(
         (notification) => notification.isRead === false
@@ -27,7 +28,7 @@ export default class NotificationController {
 
   static async markAsRead(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.body.userId;
+      const userId = req.user.id;
       const notifications = await NotificationModule.markAsRead(userId);
       await AppDataSource.manager.save(notifications);
       res
@@ -44,9 +45,12 @@ export default class NotificationController {
     next: NextFunction
   ) {
     try {
-      const notificationId = req.params.id;
+      const { id } = req.params;
+      if (!id) {
+        throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+      }
       const notification =
-        await NotificationModule.deleteNotification(notificationId);
+        await NotificationModule.deleteNotification(id);
       res
         .status(StatusCodes.OK)
         .json({ message: ReasonPhrases.OK, data: notification });
@@ -61,7 +65,7 @@ export default class NotificationController {
     next: NextFunction
   ) {
     try {
-      const userId = req.body.userId;
+      const userId = req.user.id;
       await NotificationModule.deleteUserNotifications(userId);
       res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
     } catch (error) {

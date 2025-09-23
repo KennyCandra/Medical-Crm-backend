@@ -7,6 +7,7 @@ import SocketManager from "../../socket";
 import NotificationModule from "../modules/NotificationModule";
 import DoctorModules from "../modules/DoctorModules";
 import { runInTransaction } from "../utils/TransactionalHelper";
+import PermissionsModule from "../modules/PermissionsModule";
 
 export class DiagnosisController {
   static async createDiagonsis(
@@ -15,13 +16,29 @@ export class DiagnosisController {
     next: NextFunction
   ) {
     try {
-      const { patientId, doctorId, diseaseId, severity, notes } = req.body;
+      const { patientId, doctorId, diseaseId, severity, notes } =
+        req.body;
+
       const result = await runInTransaction(async (manager) => {
         const [previousDiagnosis, patient, doctor] = await Promise.all([
           DiagnosisModule.findForPatient(patientId as string),
           UserModules.findUserById(patientId as string),
           DoctorModules.findDoctor(doctorId as string),
         ]);
+        if (!patient.openAccess && req.user.role !== 'admin' && patient.id !== req.user.id) {
+          const hasPermission =
+            await PermissionsModule.checkPermissionValidation(
+              patient.id,
+              doctor.id,
+              2
+            );
+          if (!hasPermission) {
+            throw createHttpError.Forbidden(
+              "You do not have permission to create a diagnosis"
+            );
+          }
+        }
+
         const diseaseIds = previousDiagnosis.map(
           (diagnosis) => diagnosis.disease.id
         );
@@ -65,12 +82,37 @@ export class DiagnosisController {
   ) {
     try {
       const { nid } = req.params;
-      if (nid.length !== 14) {
-        res.status(404).json({ message: 'can"t find this' });
-        return;
+      const { id } = req.user;
+      const doctor = await UserModules.findUserById(id);
+
+      if (!nid) {
+        throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
       }
 
       const patient = await UserModules.findUserByNid(nid);
+
+      if (!patient || !doctor.doctorProfile) {
+        throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
+      }
+
+
+      if (
+        !patient.openAccess &&
+        req.user.role !== "admin" &&
+        patient.id !== id
+      ) {
+        const hasPermissions =
+          await PermissionsModule.checkPermissionValidation(
+            doctor.doctorProfile.id,
+            patient.id,
+            1
+          );
+        if (!hasPermissions) {
+          throw createHttpError.Forbidden(
+            "You do not have permission to view this patient's diagnosis"
+          );
+        }
+      }
       const diagnosis = await DiagnosisModule.findForPatient(patient.id);
       SocketManager.emitToUser(patient.id, "diagnosis", diagnosis);
 
@@ -87,8 +129,11 @@ export class DiagnosisController {
     next: NextFunction
   ) {
     try {
-      const { id } = req.params;
       const result = await runInTransaction(async (manager) => {
+        const { id } = req.params;
+        if (!id) {
+          throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+        }
         const data = await DiagnosisModule.removeDiagnosis(id);
         const newNotification = await NotificationModule.createNotification(
           "Removed Diagnosis",
