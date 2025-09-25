@@ -1,9 +1,20 @@
 import { Notification } from "../entities/Notification";
 import { User } from "../entities/user";
-import { AppDataSource } from "../../ormconfig";
-import createHttpError from "http-errors";
+import BasicModule from "./BasicModule";
+import { FindOptionsSelect, ObjectLiteral } from "typeorm";
 
-export default class NotificationModule {
+export default class NotificationModule extends BasicModule<Notification> {
+  private static instance: NotificationModule;
+  protected entityClass = Notification;
+  protected entityName = "Notification";
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new NotificationModule();
+    }
+    return this.instance;
+  }
+
   static async createNotification(
     title: string,
     message: string,
@@ -24,43 +35,45 @@ export default class NotificationModule {
   }
 
   static async getNotifications(userId: string) {
-    const notifications = await AppDataSource.getRepository(Notification)
-      .createQueryBuilder("notification")
-      .where("notification.user.id = :userId", { userId })
-      .leftJoinAndSelect("notification.user", "user")
-      .select([
-        "notification.id as id",
-        "notification.title as title",
-        "notification.message as message",
-        "notification.isRead as isRead",
-        "notification.created_at as created_at",
-        "CONCAT(user.first_name, ' ', user.last_name) as name",
-        "notification.entity as entity",
-        "notification.foreignItemId as foreignItemId",
-      ])
-      .orderBy("notification.isRead", "ASC")
-      .addOrderBy("notification.created_at", "DESC")
-      .getRawMany();
+    const order = {
+      isRead: "ASC",
+      created_at: "DESC",
+    }
+    const where = {
+      user: { id: userId },
+    }
+
+    const relations = ["user"]
+    const selection = { id: true, title: true, message: true, isRead: true, created_at: true, name: true, entity: true, foreignItemId: true };
+
+    const notifications = await this.getInstance().customFind(relations, where, order, selection);
     return notifications;
   }
 
   static async getUnreadNotifications(userId: string) {
-    const notifications = await AppDataSource.getRepository(Notification).find({
-      where: {
-        user: { id: userId },
-        isRead: false,
-      },
-      order: {
-        created_at: "DESC",
-      },
-    });
+
+    const order = {
+      created_at: "DESC",
+    }
+    const where = {
+      user: { id: userId },
+      isRead: false,
+    }
+    const relations = ["user"]
+    const selection: FindOptionsSelect<ObjectLiteral> = {};
+
+
+    const notifications = this.getInstance().customFind(relations, where, order, selection);
     return notifications;
   }
 
   static async markAsRead(userId: string) {
-    const notifications = await AppDataSource.getRepository(Notification).find({
-      where: { user: { id: userId }, isRead: false },
-    });
+    const where = { user: { id: userId }, isRead: false };
+    const relations = ["user"];
+    const order = {};
+    const selection: FindOptionsSelect<ObjectLiteral> = {};
+    const notifications = await this.getInstance().customFind(relations, where, order, selection);
+
     notifications.forEach((notification) => {
       notification.isRead = true;
     });
@@ -68,24 +81,10 @@ export default class NotificationModule {
   }
 
   static async deleteNotification(notificationId: string) {
-    const notification = await AppDataSource.getRepository(
-      Notification
-    ).findOne({
-      where: { id: notificationId },
-    });
-    if (!notification) {
-      throw createHttpError.NotFound("Notification not found");
-    }
-    await AppDataSource.getRepository(Notification).delete(notificationId);
-    return notification;
+   await this.getInstance().deleteById(notificationId);
   }
 
   static async deleteUserNotifications(userId: string): Promise<void> {
-    await AppDataSource.getRepository(Notification)
-      .createQueryBuilder()
-      .delete()
-      .from(Notification)
-      .where("user.id = :userId", { userId })
-      .execute();
+    await this.getInstance().deleteWithWhere({ user: { id: userId } });
   }
 }

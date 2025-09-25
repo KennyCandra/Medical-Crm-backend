@@ -1,10 +1,21 @@
 import { User } from "../entities/user";
+import BasicModule from "./BasicModule";
+import { FindOptionsSelect, Like, ObjectLiteral } from "typeorm";
 import bcrypt from "bcrypt";
-import createHttpError from "http-errors";
-import { AppDataSource } from "../../ormconfig";
-import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
-export default class UserModules {
+export default class UserModules extends BasicModule<User> {
+
+  private static instance: UserModules;
+  protected entityClass = User;
+  protected entityName = "User";
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new UserModules();
+    }
+    return this.instance;
+  }
+
   static async createUser(
     firstName: string,
     lastName: string,
@@ -25,82 +36,76 @@ export default class UserModules {
       | "O-"
       | "unknown"
   ) {
-
     const hashedPw = await bcrypt.hash(password, 12);
-    const newUser = new User();
-    newUser.NID = NID;
-    newUser.first_name = firstName;
-    newUser.gender = gender;
-    newUser.last_name = lastName;
-    newUser.role = role;
-    newUser.password = hashedPw;
-    newUser.birth_date = new Date(birth_date!) ?? new Date();
-    newUser.blood_type = blood_type!;
-    newUser.email = email;
+    const newUser = await this.getInstance().getRepository().create({
+      NID: NID,
+      first_name: firstName,
+      gender: gender,
+      last_name: lastName,
+      role: role,
+      password: hashedPw,
+      birth_date: new Date(birth_date!) ?? new Date(),
+      blood_type: blood_type!,
+      email: email
+    })
 
     return newUser;
   }
 
-  static async findUserByNid(nid: string) {
-    const user = await AppDataSource.getRepository(User)
-      .createQueryBuilder("user")
-      .where("user.NID = :nid", { nid })
-      .leftJoinAndSelect("user.doctorProfile", "doctor")
-      .getOne();
-    return user
-  }
-
-  static async findUserByEmail(email: string) {
-
-    const user = await AppDataSource.getRepository(User)
-      .createQueryBuilder("user")
-      .where("user.email = :email", { email })
-      .getOne();
-    return user;
-  }
-
-  static async findUserById(id: string) {
-
-    const user = await AppDataSource.getRepository(User)
-      .createQueryBuilder("user")
-      .where("user.id = :id", { id })
-      .leftJoinAndSelect("user.doctorProfile", "doctor")
-      .getOne();
-
-    if (!user || !user.doctorProfile) {
-      throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
+  static async findUserByNid(nid: string): Promise<User | null> {
+    const relations = ["doctorProfile"];
+    const where = { NID: nid };
+    const order = {};
+    const selection = { id: true, NID: true, first_name: true, last_name: true, role: true, password: true, birth_date: true, blood_type: true, email: true };
+    const users = await this.getInstance().customFind(relations, where, order, selection);
+    if (!users[0]) {
+      return null
     }
+    return users[0]
+  }
 
-    return user;
+  static async findUserByEmail(email: string): Promise<User | null> {
+    const relations = ["doctorProfile"];
+    const where = { email: email };
+    const order = {};
+    const selection = { id: true, NID: true, first_name: true, last_name: true, role: true, password: true, birth_date: true, blood_type: true, email: true };
+    const users = await this.getInstance().customFind(relations, where, order, selection);
+    if (!users[0]) {
+      return null
+    }
+    console.log(users)
+    return users[0]
+  }
+
+  static async findUserById(id: string): Promise<User | null> {
+    const user = await this.getInstance().findWithIdAndRelations(id, ["doctorProfile"])
+    if (!user[0]) {
+      return null
+    }
+    return user[0]
   }
 
   static async searchUsersByNid(nid: string) {
-    const users = await AppDataSource.getRepository(User)
-      .createQueryBuilder("user")
-      .where("user.NID LIKE :nid", { nid: `${nid}%` })
-      .andWhere("user.role != :role", { role: "admin" })
-      .select([
-        "user.id AS id",
-        "user.NID AS NID",
-        "user.first_name AS first_name",
-        "user.last_name AS last_name",
-      ])
-      .getRawMany();
-    return users;
+    const relations = ["doctorProfile"];
+    const where = { NID: Like(`${nid}%`) };
+    const order = {};
+    const selection = { id: true, NID: true, first_name: true, last_name: true };
+    const users = await this.getInstance().customFind(relations, where, order, selection);
+    return users
   }
 
 
   static async fetchAllUserDataWithNid(nid: string) {
-
-    const user = await AppDataSource.getRepository(User)
-      .createQueryBuilder("user")
-      .where("user.NID = :nid", { nid })
-      .leftJoinAndSelect("user.patientDiagnoses", "diagnoses")
-      .leftJoinAndSelect("diagnoses.disease", "disease")
-      .leftJoinAndSelect("user.patientAllergies", "allergies")
-      .leftJoinAndSelect("allergies.allergy", "allergy")
-      .getOne();
-
-    return user;
+    const relations = ["patientDiagnoses", "patientAllergies" , "patientAllergies.allergy" , "patientDiagnoses.disease"];
+    const where = { NID: nid };
+    const order = {};
+    const selection: FindOptionsSelect<ObjectLiteral> = {};
+    const user = await this.getInstance().customFind(relations, where, order, selection);
+    console.log("user", user)
+    if (!user[0]) {
+      return null
+    }
+    return user[0]
   }
+
 }

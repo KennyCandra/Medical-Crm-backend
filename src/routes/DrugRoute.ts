@@ -1,20 +1,12 @@
-import express from "express";
-const router = express.Router();
-import DrugController from "../controllers/DrugsController";
+
+import DrugServices from "../Services/DrugServices";
 import Auth from "../middleware/middleware";
+import { RouteFactory } from "../utils/RouterFactory";
 
-router.post(
-  "/interaction",
-  Auth.checkToken,
-  Auth.checkRoles(["doctor", "admin"]),
-  DrugController.getInteractions
-);
 
-router.get(
-  "/search/:value",
-  Auth.checkToken,
-  Auth.checkRoles(["doctor", "admin"]),
-  DrugController.searchDrug
-);
+const router = RouteFactory.createCustomRoutes([
+  { method: "post", path: "/interaction", handler: DrugServices.getInteractions, middleware: [Auth.checkToken, Auth.checkRoles(["doctor", "admin"])] },
+  { method: "get", path: "/search/:value", handler: DrugServices.searchDrug, middleware: [Auth.checkToken, Auth.checkRoles(["doctor", "admin"])] },
+]);
 
 export default router;

@@ -1,66 +1,55 @@
-import { Request, Response, NextFunction } from "express";
-import DrugsModule from "../modules/DrugsModule";
-import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import AiPrompts from "../modules/Ai-Prompts";
+import DrugsModule from "../modules/DrugsModule";
+import { Drug } from "../entities/drug";
 
-
-type Drug = {
-  name: string
-}
 class DrugController {
-  static async getInteractions(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { drug, patientNid } = req.body;
 
-      const parsedDrug = JSON.parse(drug as string);
-      const parsedDrugString = parsedDrug.map((d: Drug) => d.name);
+  private static instance: DrugsModule
 
-      let parsedTextOldDrugInterActionAndAllergies = null;
-      let parsedTextForDrugInteraction = null;
-      if (patientNid) {
-        parsedTextOldDrugInterActionAndAllergies =
-          await AiPrompts.fetchOldDrugInteractionsAndAllergies(
-            patientNid,
-            parsedDrugString
-          );
-      }
-      if (parsedDrug.length > 1) {
-        parsedTextForDrugInteraction =
-          await AiPrompts.fetchDrugInteraction(parsedDrugString);
-      }
-      res.status(StatusCodes.OK).json({
-        message: ReasonPhrases.OK,
-        parsedTextForDrugInteraction,
-        parsedTextOldDrugInterActionAndAllergies,
-      });
-    } catch (err) {
-      next(err);
+  private static getInstance() {
+    if (!DrugController.instance) {
+      DrugController.instance = new DrugsModule();
+    }
+    return DrugController.instance;
+  }
+
+  static async getInteractions(drug: string, patientNid: string) {
+    const parsedDrug = JSON.parse(drug as string);
+    const parsedDrugString = parsedDrug.map((d: Drug) => d.name);
+
+    let parsedTextOldDrugInterActionAndAllergies = null;
+    let parsedTextForDrugInteraction = null;
+    if (patientNid) {
+      parsedTextOldDrugInterActionAndAllergies =
+        await AiPrompts.fetchOldDrugInteractionsAndAllergies(
+          patientNid,
+          parsedDrugString
+        );
+    }
+    if (parsedDrug.length > 1) {
+      parsedTextForDrugInteraction =
+        await AiPrompts.fetchDrugInteraction(parsedDrugString);
+    }
+    return {
+      parsedTextForDrugInteraction,
+      parsedTextOldDrugInterActionAndAllergies,
     }
   }
 
-  static async searchDrug(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { value } = req.params;
-      let searchValue = value ? value : ''
-      const drugs = await DrugsModule.searchDrug(searchValue);
-      const editedDrugs = drugs.map((drug) => {
-        return {
-          id: drug.id,
-          name: drug.name,
-          route: drug.route,
-        };
-      });
-      res
-        .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, drugs: editedDrugs });
-    } catch (err) {
-      next(err);
-    }
+  static async searchDrug(value: string) {
+    let searchValue = value ? value : ''
+    const drugs = await this.getInstance().search(searchValue, "name");
+    const editedDrugs = drugs?.map((drug: Drug) => {
+      return {
+        id: drug.id,
+        name: drug.name,
+        route: drug.route?.name,
+      };
+    });
+
+    return editedDrugs
   }
 }
+
 
 export default DrugController;

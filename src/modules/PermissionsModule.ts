@@ -1,9 +1,19 @@
-import { AppDataSource } from "../../ormconfig";
 import { DoctorProfile } from "../entities/doctorProfile";
 import Permission from "../entities/Permissions";
 import { User } from "../entities/user";
+import BasicModule from "./BasicModule";
 
-export default class PermissionsModule {
+export default class PermissionsModule extends BasicModule<Permission> {
+  private static instance: PermissionsModule;
+  protected entityClass = Permission;
+  protected entityName = "Permission";
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new PermissionsModule();
+    }
+    return this.instance;
+  }
   static async createNewPermissionsLevel(
     levelName: number,
     doctor: string,
@@ -21,21 +31,18 @@ export default class PermissionsModule {
     doctorId: string,
     permissionLevel: number
   ) {
-    const userPermission = await AppDataSource.getRepository(Permission)
-      .createQueryBuilder("permissions")
-      .where("permissions.patientId = :userId", { userId })
-      .andWhere("permissions.doctorId = :doctorId", { doctorId })
-      .getOne();
-
-    if (!userPermission) {
+    const relations = ["doctor", "patient"];
+    const where = {
+      patient: { id: userId },
+      doctor: { id: doctorId }
+    };
+    const order = {};
+    const selection = { id: true, permissionLevel: true, doctor: true, patient: true };
+    const userPermission = await this.getInstance().customFind(relations, where, order, selection);
+    if (!userPermission[0]) {
       return false;
     }
-
-    if (userPermission.permissionLevel < permissionLevel) {
-      return false;
-    }
-
-    return true;
+    return userPermission[0].permissionLevel >= permissionLevel;
   }
 
   static async createRequest(
@@ -51,32 +58,29 @@ export default class PermissionsModule {
   }
 
   static async getRequestById(id: string) {
-    const request = await AppDataSource.getRepository(
-      Permission
-    ).findOne({ where: { id }, relations: ["doctor", "patient"] });
-    if (!request) {
-      throw new Error("Request not found");
-    }
+    const relations = ["doctor", "patient"];
+    const where = { id };
+    const order = {};
+    const selection = { id: true, permissionLevel: true, doctor: true, patient: true };
+    const request = await this.getInstance().customFind(relations, where, order, selection);
     return request;
   }
 
   static async getRequestsByPatientId(patientId: string) {
-    const requests = await AppDataSource.getRepository(Permission)
-      .createQueryBuilder("request")
-      .leftJoinAndSelect("request.doctor", "doctor")
-      .leftJoinAndSelect("request.patient", "patient")
-      .where("patient.id = :patientId", { patientId })
-      .getMany();
+    const relations = ["doctor", "patient"];
+    const where = { patient: { id: patientId } };
+    const order = {};
+    const selection = { id: true, permissionLevel: true, doctor: true, patient: true };
+    const requests = await this.getInstance().customFind(relations, where, order, selection);
     return requests;
   }
 
   static async getRequestsByDoctorId(doctorId: string) {
-    const requests = await AppDataSource.getRepository(Permission)
-      .createQueryBuilder("request")
-      .leftJoinAndSelect("request.doctor", "doctor")
-      .leftJoinAndSelect("request.patient", "patient")
-      .where("doctor.id = :doctorId", { doctorId })
-      .getMany();
+    const relations = ["doctor", "patient"];
+    const where = { doctor: { id: doctorId } };
+    const order = {};
+    const selection = { id: true, permissionLevel: true, doctor: true, patient: true };
+    const requests = await this.getInstance().customFind(relations, where, order, selection);
     return requests;
   }
 }

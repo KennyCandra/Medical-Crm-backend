@@ -1,43 +1,39 @@
-import createhttperror from 'http-errors'
-import { AppDataSource } from '../../ormconfig'
+
 import { Disease } from '../entities/disease'
+import BasicModule from './BasicModule'
+import { FindOptionsSelect, Like, ObjectLiteral } from 'typeorm';
 
+export default class DiseaseModule extends BasicModule<Disease> {
+    private static instance: DiseaseModule;
+    protected entityClass = Disease;
+    protected entityName = "Disease";
 
-export default class DiseaseModule {
+    public static getInstance() {
+        if (!this.instance) {
+            this.instance = new DiseaseModule();
+        }
+        return this.instance;
+    }
+
     static async findDiseaseById(id: string) {
-        try {
-            const disease = await AppDataSource.getRepository(Disease).findOneBy({ id: id })
-            return disease
-
-        } catch {
-            throw createhttperror[500]('internal server error')
-        }
+        const disease = await this.getInstance().findById(id);
+        return disease;
     }
 
-    static async fetchAllDiseases() {
-        const diseases = await AppDataSource.getRepository(Disease).find()
-        return diseases
-    }
-
-    static async fetchSpecificDiseases(searchTerm: string) {
-        const diseases = await AppDataSource.getRepository(Disease)
-            .createQueryBuilder('d')
+    static async searchDiseases(searchTerm: string) {
         if (searchTerm.startsWith('*')) {
-            searchTerm = searchTerm.replace('*', '')
-            diseases.where('d.name LIKE :value', { value: `%${searchTerm}%` })
+            const cleanTerm = searchTerm.replace('*', '');
+            const relations: string[] = [];
+            const where = { name: Like(`%${cleanTerm}%`) };
+            const order = {};
+            const selection: FindOptionsSelect<ObjectLiteral> = {};
+            return await this.getInstance().customFind(relations, where, order, selection);
         } else {
-            diseases.where('d.name LIKE :value', { value: `${searchTerm}%` })
+            const relations: string[] = [];
+            const where = { name: Like(`${searchTerm}%`) };
+            const order = {};
+            const selection: FindOptionsSelect<ObjectLiteral> = {};
+            return await this.getInstance().customFind(relations, where, order, selection);
         }
-
-        const diseasesResult = await diseases.getMany();
-
-        return diseasesResult
-
     }
 }
-
-
-
-
-
-

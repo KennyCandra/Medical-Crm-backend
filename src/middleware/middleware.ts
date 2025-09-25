@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../helpers/verifyToken";
 import { ResponseHelper } from "../utils/ResponseHelper";
+import asyncWrapper from "../utils/AsyncWrapper";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -19,29 +20,25 @@ interface DecodedToken {
 }
 
 class Auth {
-  static async checkToken(req: Request, res: Response, next: NextFunction) {
-    try {
-      const accessToken = req.get("Authorization");
-      if (!accessToken) {
-        ResponseHelper.unauthorized(res);
-        return;
-      }
-
-      const { decodedToken, expired } = await verifyToken(accessToken, "access");
-
-      if (expired) {
-        ResponseHelper.unauthorized(res);
-        return;
-      }
-      req.user = {
-        role: (decodedToken as DecodedToken).role,
-        id: (decodedToken as DecodedToken).userId
-      }
-      next();
-    } catch (error) {
-      next(error);
+  static checkToken = asyncWrapper(async (req: Request, res: Response, next: NextFunction) => {
+    const accessToken = req.get("Authorization");
+    if (!accessToken) {
+      ResponseHelper.unauthorized(res);
+      return;
     }
-  }
+
+    const { decodedToken, expired } = await verifyToken(accessToken, "access");
+
+    if (expired) {
+      ResponseHelper.unauthorized(res);
+      return;
+    }
+    req.user = {
+      role: (decodedToken as DecodedToken).role,
+      id: (decodedToken as DecodedToken).userId
+    }
+    next();
+  })
 
   static checkRoles(allowedRoles: string[]) {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -56,7 +53,7 @@ class Auth {
         return;
       }
       next();
-    };
+    }
   }
 }
 

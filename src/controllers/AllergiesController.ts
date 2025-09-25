@@ -1,99 +1,49 @@
-import { NextFunction, Request, Response } from "express";
-import createhttperror from "http-errors";
-import { AppDataSource } from "../../ormconfig";
 import { Pallergy } from "../entities/Pallergy";
 import AllergyModule from "../modules/AllergyModule";
 import PallergyModule from "../modules/PallergyModule";
 import UserModules from "../modules/UserModules";
-import { StatusCodes, ReasonPhrases } from "http-status-codes";
+import { Allergy } from "../entities/Allergy";
 
 export default class AllergiesController {
-  static async getAllergiesForPatient(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const { nid } = req.params;
-      if (!nid) {
-        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
-      }
-      const patient = await UserModules.findUserByNid(nid);
-      if (!patient) {
-        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
-      }
-      const allergies = await PallergyModule.findForPatient(patient.id);
-      if (!allergies) {
-        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
-      }
-      res
-        .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, allergies: allergies });
-    } catch (error) {
-      next(error);
+  static async getAllergiesForPatient(nid: string): Promise<Pallergy[] | null> {
+    const patient = await UserModules.findUserByNid(nid);
+
+    if (!patient) {
+      return null
     }
+
+    const allergies = await PallergyModule.findForPatient(patient?.id);
+    return allergies;
   }
 
-  static async addAllergy(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { values } = req.body;
-      const userId = req.user.id;
-      const patient = await UserModules.findUserById(userId);
-      if (!patient) {
-        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
-      }
+  static async addAllergy(allergyId: string, id: string): Promise<Pallergy | null> {
+    ;
 
-      const patientAllergies = await PallergyModule.findForPatient(patient.id);
 
-      if (patientAllergies.some((a) => a.allergy.id === values.allergyId)) {
-        throw createhttperror(StatusCodes.CONFLICT, ReasonPhrases.CONFLICT);
-      }
-      const allergy = await AllergyModule.findAllergyById(values.allergyId);
-      if (!allergy) {
-        throw createhttperror(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
-      }
-      const newPallergy = await PallergyModule.PallergyCreation(
-        patient,
-        allergy
-      );
-      await AppDataSource.getRepository(Pallergy).save(newPallergy);
-      res
-        .status(StatusCodes.CREATED)
-        .json({ message: ReasonPhrases.CREATED, pallergy: newPallergy });
-    } catch (error) {
-      next(error);
-    }
+    const newPallergy = await PallergyModule.create(id, allergyId);
+
+    await PallergyModule.getInstance().save(newPallergy as Pallergy);
+
+    return newPallergy as Pallergy;
   }
 
-  static async removePallergy(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { pallergyId } = req.params;
+  static async removePallergy(pallergyId: string, id: string): Promise<boolean> {
 
-      if (!pallergyId) {
-        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
-      }
-      await PallergyModule.removePallergy(pallergyId);
-      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
-    } catch (error) {
-      next(error);
+    const relation = ['patient'];
+    const where = { id: pallergyId, patient: { id: id } };
+    const pallergy = await PallergyModule.getInstance().customFind(relation, where);
+
+    if (pallergy[0]?.patient.id !== id) {
+      return false;
     }
+
+    await PallergyModule.getInstance().deleteById(pallergy[0].id);
+
+    return true;
   }
 
-  static async getSpecificAllergy(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const { allergyText } = req.params;
-      if (!allergyText) {
-        throw createhttperror(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
-      }
-
-      const allergy = await AllergyModule.fetchSpecificAllergy(allergyText);
-      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK, allergy });
-    } catch (error) {
-      next(error);
-    }
+  static async fetchAllergies(value: string): Promise<Allergy[]> {
+    return await AllergyModule.getInstance().search(value, "name");
   }
 }
+

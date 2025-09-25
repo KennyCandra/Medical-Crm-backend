@@ -1,75 +1,54 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import NotificationModule from "../modules/NotificationModule";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { AppDataSource } from "../../ormconfig";
 import createHttpError from 'http-errors'
+import asyncWrapper from "../utils/AsyncWrapper";
 
 export default class NotificationController {
-  static async getNotifications(
+  static getNotifications = asyncWrapper(async (
     req: Request,
     res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const userId = req.user.id;
-      const notifications = await NotificationModule.getNotifications(userId);
-      const notReadNotificationsLength = notifications.filter(
-        (notification) => notification.isRead === false
-      ).length;
-      res.status(StatusCodes.OK).json({
-        message: ReasonPhrases.OK,
-        data: notifications,
-        notificationsLength: notReadNotificationsLength,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  ) => {
+    const userId = req.user.id;
+    const notifications = await NotificationModule.getNotifications(userId);
+    const notReadNotificationsLength = notifications.filter(
+      (notification) => notification.isRead === false
+    ).length;
+    res.status(StatusCodes.OK).json({
+      message: ReasonPhrases.OK,
+      data: notifications,
+      notificationsLength: notReadNotificationsLength,
+    });
+  })
 
-  static async markAsRead(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.user.id;
-      const notifications = await NotificationModule.markAsRead(userId);
-      await AppDataSource.manager.save(notifications);
-      res
-        .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, data: notifications });
-    } catch (error) {
-      next(error);
-    }
-  }
+  static markAsRead = asyncWrapper(async (req: Request, res: Response) => {
+    const userId = req.user.id;
+    const notifications = await NotificationModule.markAsRead(userId);
+    await AppDataSource.manager.save(notifications);
+    res
+      .status(StatusCodes.OK)
+      .json({ message: ReasonPhrases.OK, data: notifications });
+  })
 
-  static async deleteNotification(
+  static deleteNotification = asyncWrapper(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id) {
+      throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
+    }
+    const notification =
+      await NotificationModule.deleteNotification(id);
+    res
+      .status(StatusCodes.OK)
+      .json({ message: ReasonPhrases.OK, data: notification });
+  })
+
+  static deleteAllNotifications = asyncWrapper(async (
     req: Request,
     res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const { id } = req.params;
-      if (!id) {
-        throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
-      }
-      const notification =
-        await NotificationModule.deleteNotification(id);
-      res
-        .status(StatusCodes.OK)
-        .json({ message: ReasonPhrases.OK, data: notification });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  static async deleteAllNotifications(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const userId = req.user.id;
-      await NotificationModule.deleteUserNotifications(userId);
-      res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
-    } catch (error) {
-      next(error);
-    }
-  }
+  ) => {
+    const userId = req.user.id;
+    await NotificationModule.deleteUserNotifications(userId);
+    res.status(StatusCodes.OK).json({ message: ReasonPhrases.OK });
+  })
 }

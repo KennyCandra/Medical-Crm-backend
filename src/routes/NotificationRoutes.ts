@@ -1,17 +1,12 @@
-import { Router } from "express";
 import NotificationController from "../controllers/NotificationController";
 import Auth from "../middleware/middleware";
+import { RouteFactory } from "../utils/RouterFactory";
 
-const router = Router();
-
-router.get("/", Auth.checkToken ,NotificationController.getNotifications);
-
-router.put('/read', Auth.checkToken ,NotificationController.markAsRead);
-
-router.delete('/delete/:id', Auth.checkToken ,NotificationController.deleteNotification);
-
-router.delete('/delete-all', Auth.checkToken ,NotificationController.deleteAllNotifications);
-
-
+const router = RouteFactory.createCustomRoutes([
+    { method: "get", path: "/", handler: NotificationController.getNotifications, middleware: [Auth.checkToken] },
+    { method: "put", path: "/read", handler: NotificationController.markAsRead, middleware: [Auth.checkToken] },
+    { method: "delete", path: "/delete/:id", handler: NotificationController.deleteNotification, middleware: [Auth.checkToken] },
+    { method: "delete", path: "/delete-all", handler: NotificationController.deleteAllNotifications, middleware: [Auth.checkToken] },
+]);
 
 export default router;

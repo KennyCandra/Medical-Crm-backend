@@ -1,14 +1,20 @@
-import { AppDataSource } from "../../ormconfig"
-import { Category } from "../entities/Category"
 
-export default class CategoryModule {
-    static async findCat(id: string) {
-        try {
-            const category = await AppDataSource.getRepository(Category).findOneBy({ id: id })
-            return category
-        } catch (err) {
-            console.log(err)
-            throw err
+import { Category } from "../entities/Category"
+import BasicModule from "./BasicModule";
+
+export default class CategoryModule extends BasicModule<Category> {
+    private static instance: CategoryModule;
+    protected entityClass = Category;
+    protected entityName = "Category";
+
+    public static getInstance() {
+        if (!this.instance) {
+            this.instance = new CategoryModule();
         }
+        return this.instance;
+    }
+
+    static async findCat(id: string) {
+        return await this.getInstance().findById(id);
     }
 }

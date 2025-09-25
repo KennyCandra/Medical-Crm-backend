@@ -1,8 +1,9 @@
-import express from "express";
 import specialization from "../controllers/specializationController";
+import { RouteFactory } from "../utils/RouterFactory";
 
-const router = express.Router()
 
-router.get('/', specialization.fetchAll)
+const router = RouteFactory.createCustomRoutes([
+    { method: "get", path: "/", handler: specialization.fetchAll },
+])
 
 export default router

@@ -3,7 +3,7 @@ import pkg from "jsonwebtoken";
 
 const { sign } = pkg;
 
-export function CreateAuthenticationToken(user: User) {
+export function CreateAuthenticationToken(user: User): { accessToken: string, refreshToken: string } {
   const accessToken = sign(
     { userId: user.id, role: user.role },
     process.env['JWT_SECRET_ACCESS'] as string,

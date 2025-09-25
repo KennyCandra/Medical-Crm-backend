@@ -1,23 +1,13 @@
-import { Router } from "express";
-import { DiagnosisController } from "../controllers/DiagnosisController";
+
+import DiganosisService from "../Services/DiganosisService";
 import Auth from "../middleware/middleware";
+import { RouteFactory } from "../utils/RouterFactory";
 
-const router = Router();
+const router = RouteFactory.createCustomRoutes([
+  { method: "post", path: "/create", handler: DiganosisService.createDiagnosis, middleware: [Auth.checkToken, Auth.checkRoles(["doctor", "admin"])] },
+  { method: "get", path: "/:nid", handler: DiganosisService.fetchForPatient, middleware: [Auth.checkToken, Auth.checkRoles(["doctor", "admin"])] },
+  { method: "delete", path: "/remove/:id", handler: DiganosisService.removeDiagnosis },
+]);
 
-router.post(
-  "/create",
-  Auth.checkToken,
-  Auth.checkRoles(["doctor", "admin"]),
-  DiagnosisController.createDiagonsis
-);
-
-router.get("/:nid", Auth.checkToken, Auth.checkRoles(["doctor", "admin"]), DiagnosisController.fetchForPatient);
-
-router.delete(
-  "/remove/:id",
-  Auth.checkToken,
-  Auth.checkRoles(["doctor", "admin"]),
-  DiagnosisController.removeDiagnosis
-);
 
 export default router;

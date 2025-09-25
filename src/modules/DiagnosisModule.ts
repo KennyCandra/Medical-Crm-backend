@@ -1,12 +1,23 @@
-import { AppDataSource } from "../../ormconfig";
+
 import { Diagnosis } from "../entities/diagnosis";
 import { Disease } from "../entities/disease";
 import { DoctorProfile } from "../entities/doctorProfile";
 import { User } from "../entities/user";
-import createHttpError from "http-errors";
-import { EntityManager } from "typeorm";
+import BasicModule from "./BasicModule";
+import { FindOptionsSelect, ObjectLiteral } from "typeorm";
 
-export default class DiagnosisModule {
+export default class DiagnosisModule extends BasicModule<Diagnosis> {
+  private static instance: DiagnosisModule;
+  protected entityClass = Diagnosis;
+  protected entityName = "Diagnosis";
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new DiagnosisModule();
+    }
+    return this.instance;
+  }
+
   static async diagnosesCreation(
     patient: string,
     doctor: string,
@@ -14,63 +25,30 @@ export default class DiagnosisModule {
     severity: "acute" | "severe" | "mild" | "chronic",
     notes: string
   ) {
-    try {
-      const diagnoses = new Diagnosis();
-      diagnoses.doctor = { id: doctor } as DoctorProfile;
-      diagnoses.patient = { id: patient } as User;
-      diagnoses.disease = { id: disease } as Disease;
-      diagnoses.severity = severity;
-      diagnoses.notes = notes;
-      return diagnoses;
-    } catch (err) {
-      throw createHttpError(500, "internal server error");
-    }
+    const diagnoses = new Diagnosis();
+    diagnoses.patient = { id: patient } as User;
+    diagnoses.doctor = { id: doctor } as DoctorProfile;
+    diagnoses.disease = { id: disease } as Disease;
+    diagnoses.severity = severity;
+    diagnoses.notes = notes;
+    return diagnoses;
   }
 
-  static async findForPatient(patient: string): Promise<Diagnosis[]> {
-    try {
-      const diagnoses = await AppDataSource.getRepository(Diagnosis).find({
-        where: { patient: { id: patient } },
-        relations: ["disease"],
-        order: {
-          created_at: "ASC",
-        },
-      });
-
-      return diagnoses;
-    } catch (err) {
-      console.log(err);
-      throw createHttpError(500, "internal server error");
-    }
+  static async findForPatient(patientId: string) {
+    const relations = ["disease"];
+    const where = { patient: { id: patientId } };
+    const order = {};
+    const selection: FindOptionsSelect<ObjectLiteral> = {
+      id: true,
+      disease: {
+        id: true,
+        name: true
+      }
+    };
+    return await this.getInstance().customFind(relations, where, order, selection);
   }
 
-  static async removeDiagnosis(
-    id: string,
-    manager?: EntityManager
-  ): Promise<{ patientId: string }> {
-    try {
-      const em = manager ?? AppDataSource.manager;
-      const diagnosisRepo = em.getRepository(Diagnosis);
-
-      const diagnosis = await diagnosisRepo.findOne({
-        where: { id },
-        relations: ["patient"],
-      });
-
-      if (!diagnosis) {
-        throw createHttpError(404, "diagnosis not found");
-      }
-
-      const patientId = diagnosis.patient?.id;
-      if (!patientId) {
-        throw createHttpError(500, "diagnosis patient is missing");
-      }
-
-      await diagnosisRepo.delete(id);
-      return { patientId };
-    } catch (err) {
-      if (createHttpError.isHttpError(err as any)) throw err;
-      throw createHttpError(500, "internal server error");
-    }
+  static async removeDiagnosis(id: string) {
+    return await this.getInstance().deleteById(id);
   }
 }
