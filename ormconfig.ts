@@ -19,8 +19,6 @@ export const AppDataSource = new DataSource({
   migrations: process.env['ENV_MODE'] === "development" ?
     [path.join(__dirname, "src/migrations/*.ts")] :
     [path.join(__dirname, "src/migrations/*.js")],
-  logging:
-    true,
   subscribers: [],
   schema: "public",
 });
