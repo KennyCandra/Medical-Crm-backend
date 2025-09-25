@@ -1,51 +1,43 @@
-import { AppDataSource } from "../../ormconfig"
 import { Allergy } from "../entities/Allergy"
 import { Pallergy } from "../entities/Pallergy"
 import { User } from "../entities/user"
-import createhttperror from 'http-errors'
+import BasicModule from "./BasicModule";
 
-export default class PallergyModule {
-    static async PallergyCreation(patient: User,
-        allergy: Allergy) {
-        try {
-            const newPallergy = new Pallergy()
-            newPallergy.patient = patient;
-            newPallergy.allergy = allergy
-            return newPallergy
-        } catch (err) {
-            throw createhttperror(500, 'internal server error')
+export default class PallergyModule extends BasicModule<Pallergy> {
+    private static instance: PallergyModule;
+    protected entityClass = Pallergy;
+    protected entityName = "Pallergy";
+
+    public static getInstance() {
+        if (!this.instance) {
+            this.instance = new PallergyModule();
         }
-
+        return this.instance;
     }
 
-    static async findForPatient(patientId: string) {
-        try {
-            const allergies = await AppDataSource.getRepository(Pallergy)
-                .createQueryBuilder('p')
-                .select('allergy.name', 'allergy')
-                .addSelect('p.id', 'id')
-                .leftJoin('p.patient', 'patient')
-                .leftJoin('p.allergy', 'allergy')
-                .where('patient.id = :patientId', { patientId: patientId })
-                .getRawMany();
+    static async create(patientId: string,
+        allergyId: string) {
+        return this.getInstance().getRepository().create({
+            patient: { id: patientId } as User,
+            allergy: { id: allergyId } as Allergy
+        })
+    }
 
-            return allergies;
-        } catch (err) {
-            console.log(err);
-            throw createhttperror(500, 'internal server error');
-        }
+    static async findForPatient(patientId: string): Promise<Pallergy[]> {
+        const relations = ["allergy"];
+        const where = { patient: { id: patientId } };
+        const order = {};
+        const selection = {
+            id: true,
+            allergy: {
+                id: true,
+                name: true
+            }
+        };
+        return this.getInstance().customFind(relations, where, order, selection);
     }
 
     static async removePallergy(pallergyId: string): Promise<void> {
-        try {
-            const pallergy = await AppDataSource.getRepository(Pallergy).findOneBy({ id: pallergyId });
-            if (!pallergy) {
-                throw createhttperror(404, 'Pallergy not found');
-            }
-            await AppDataSource.getRepository(Pallergy).remove(pallergy);
-        } catch (err) {
-            console.log(err)
-            throw createhttperror(500, 'internal server error')
-        }
+        return await this.getInstance().deleteById(pallergyId);
     }
 }

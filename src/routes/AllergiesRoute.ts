@@ -1,34 +1,14 @@
-import express from "express";
-import AllergiesController from "../controllers/AllergiesController";
+
 import Auth from "../middleware/middleware";
-import validate from "../Schemas/SchemaValidation";
-import { AllergySchema } from "../Schemas/AllergySchema";
+import { RouteFactory } from "../utils/RouterFactory";
+import AllergyService from "../Services/AllergyService";
 
-const router = express.Router();
+const router = RouteFactory.createCustomRoutes([
+  { method: "get", path: "/:nid", handler: AllergyService.getAllergiesForPatient, middleware: [Auth.checkToken] },
+  { method: "post", path: "/add", handler: AllergyService.addAllergy, middleware: [Auth.checkToken] },
+  { method: "get", path: "/search/:value", handler: AllergyService.fetchAllergy, middleware: [Auth.checkToken] },
+  { method: "delete", path: "/remove/:pallergyId ", handler: AllergyService.removePallergy, middleware: [Auth.checkToken] },
+]);
 
-router.get(
-  "/:nid",
-  Auth.checkToken,
-  AllergiesController.getAllergiesForPatient
-);
-
-router.post(
-  "/add",
-  Auth.checkToken,
-  validate(AllergySchema),
-  AllergiesController.addAllergy
-);
-
-router.get(
-  "/specific/:allergyText",
-  Auth.checkToken,
-  AllergiesController.getSpecificAllergy
-);
-
-router.delete(
-  "/remove/:pallergyId",
-  Auth.checkToken,
-  AllergiesController.removePallergy
-);
 
 export default router;

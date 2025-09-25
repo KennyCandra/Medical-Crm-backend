@@ -1,39 +1,42 @@
-import { AppDataSource } from "../../ormconfig";
 import { PasswordResetToken } from "../entities/resetPw";
 import { User } from "../entities/user";
 import crypto from 'crypto'
-import createHttpError from 'http-errors'
-import { StatusCodes , ReasonPhrases } from 'http-status-codes'
+import BasicModule from "./BasicModule";
+import { MoreThan } from "typeorm";
 
-export default class PasswordResetTokenModules {
-    static async createToken(user: User) {
-        try {
-            const token = new PasswordResetToken()
-            token.user = user
-            token.token = crypto.randomBytes(32).toString('hex')
-            token.expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24)
-            token.used = false
-            return token
-        } catch (err) {
-            console.log(err)
-            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
+export default class PasswordResetTokenModules extends BasicModule<PasswordResetToken> {
+
+    private static instance: PasswordResetTokenModules;
+    protected entityClass = PasswordResetToken;
+    protected entityName = "PasswordResetToken";
+
+    public static getInstance() {
+        if (!this.instance) {
+            this.instance = new PasswordResetTokenModules();
         }
+        return this.instance;
+    }
+
+    static async createToken(user: User) {
+        const token = new PasswordResetToken()
+        token.user = user
+        token.token = crypto.randomBytes(32).toString('hex')
+        token.expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24)
+        token.used = false
+        return token
     }
 
 
     static async verifyToken(token: string) {
-        try {
-            const tokentEntity = await AppDataSource.getRepository(PasswordResetToken).createQueryBuilder('passwordResetToken')
-                .where('passwordResetToken.token = :token', { token })
-                .andWhere('passwordResetToken.expiresAt > :now', { now: new Date() })
-                .andWhere('passwordResetToken.used = false')
-                .leftJoinAndSelect('passwordResetToken.user', 'user')
-                .getOne()
-            return tokentEntity
-        }
-        catch (err) {
-            console.log(err)
-            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
-        }
+        const relations = ["user"];
+        const where = {
+            token,
+            expiresAt: MoreThan(new Date()),
+            used: false
+        };
+        const order = { expiresAt: "DESC" as "DESC" };
+        const selection = { id: true, token: true, expiresAt: true, used: true, user: true };
+        const tokentEntity = await this.getInstance().customFind(relations, where, order, selection);
+        return tokentEntity
     }
 }

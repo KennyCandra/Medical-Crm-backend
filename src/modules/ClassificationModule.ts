@@ -1,14 +1,15 @@
-import { AppDataSource } from "../../ormconfig"
 import { Classification } from "../entities/Classification"
+import BasicModule from "./BasicModule";
 
-export default class ClassificationModule {
-    static async findClass(id: string) {
-        try {
-            const classify = await AppDataSource.getRepository(Classification).findOneBy({ id: id })
-            return classify
-        } catch (err) {
-            console.log(err)
-            throw err
+export default class ClassificationModule extends BasicModule<Classification> {
+    private static instance: ClassificationModule;
+    protected entityClass = Classification;
+    protected entityName = "Classification";
+
+    public static getInstance() {
+        if (!this.instance) {
+            this.instance = new ClassificationModule();
         }
+        return this.instance;
     }
 }

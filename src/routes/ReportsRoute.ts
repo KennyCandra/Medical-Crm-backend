@@ -1,14 +1,13 @@
-import { Router } from 'express'
-import ReportsController from '../controllers/ReportsController'
+import ReportService from '../Services/ReportService'
 import Auth from '../middleware/middleware'
+import { RouteFactory } from '../utils/RouterFactory'
 
-const router = Router()
+const router = RouteFactory.createCustomRoutes([
+    { method: "post", path: "/create", handler: ReportService.createReport, middleware: [Auth.checkToken] },
+    // { method: "get", path: "/patient/:patientId", handler: ReportService.fetchReportsForPatient, middleware: [Auth.checkToken] },
+    // { method: "get", path: "/reporter/:reporterId", handler: ReportService.fetchReportsForReporter, middleware: [Auth.checkToken] },
+])
 
-router.post('/create', Auth.checkToken,ReportsController.createReport)
-
-// router.get('/patient/:patientId')
-
-// router.get('/patient/:doctorId')
 
 
 export default router

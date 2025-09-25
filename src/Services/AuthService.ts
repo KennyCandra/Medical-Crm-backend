@@ -1,5 +1,5 @@
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
-import { UpdatedUser, userWithoutImportantData } from "../helpers/UserWithoutImportantData";
+import SanitizeData, { UpdatedUser } from "../helpers/UserWithoutImportantData";
 import DoctorProfileModules from "../modules/DoctorModules";
 import UserModules from "../modules/UserModules";
 import { runInTransaction } from "../utils/TransactionalHelper";
@@ -7,11 +7,11 @@ import createHttpError from "http-errors";
 import bcrypt from "bcrypt";
 import { CreateAuthenticationToken } from "../helpers/AuthTokens";
 import RefreshTokenModule from "../modules/RefreshTokenModule";
-import PermissionsModule from "../modules/PermissionsModule";
 import prescriptionModule from "../modules/PrescriptionModule";
 import { verifyToken } from "../helpers/verifyToken";
 import { RefreshToken } from "../entities/refreshToken";
 import UserCaching from "../Caching/UserCaching";
+import { User } from "../entities/user";
 
 export default class AuthService {
 
@@ -46,127 +46,67 @@ export default class AuthService {
             await manager.save(newUser);
 
             if (role === "doctor") {
-                if (!speciality || !license) {
-                    throw createHttpError(StatusCodes.BAD_REQUEST, "speciality and license are required");
-                }
                 const doctor = await DoctorProfileModules.createDoctor({
-                    user: newUser,
+                    user: newUser as User,
                     license: license,
                     specialization: speciality,
                 });
-
                 await manager.save(doctor);
             }
 
-            let returnedUser: UpdatedUser = userWithoutImportantData(newUser);
+            let returnedUser: UpdatedUser = SanitizeData.sanitizeUser(newUser as User);
             return returnedUser;
         });
     }
 
-    static async Login(data: any) {
+    static async Login(data: any): Promise<{ refreshToken: string, accessToken: string, userWithNoData: UpdatedUser } | false> {
         return await runInTransaction(async (manager) => {
             const { nid, password } = data
 
             let user = await UserModules.findUserByNid(nid);
 
             if (!user) {
-                const errObject = {
-                    status: StatusCodes.NOT_FOUND,
-                    message: ReasonPhrases.NOT_FOUND,
-                    error: [
-                        {
-                            field: "NID",
-                            message: "user not found",
-                        }
-                    ]
-                }
-                throw createHttpError(errObject.status, errObject.message, { errors: errObject.error });
+                return false
             }
 
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
-                const errObject = {
-                    status: StatusCodes.UNAUTHORIZED,
-                    message: ReasonPhrases.UNAUTHORIZED,
-                    error: [
-                        {
-                            field: "password",
-                            message: "password is incorrect",
-                        }
-                    ]
-                }
-                throw createHttpError(errObject.status, errObject.message, { errors: errObject.error });
+                return false
             }
 
             const { accessToken, refreshToken } = CreateAuthenticationToken(user);
 
             const refreshTokenSnippet = refreshToken.split(".")[2];
-            const refreshTokenEntity = await RefreshTokenModule.createRefreshToken(
-                user,
-                refreshTokenSnippet as string
-            );
-            const userWithNoData = userWithoutImportantData(user)
+
+            const refreshTokenEntity = await RefreshTokenModule.createRefreshToken(user, refreshTokenSnippet as string);
+
+            const userWithNoData = SanitizeData.sanitizeUser(user)
             await manager.save(refreshTokenEntity);
             return { refreshToken, accessToken, userWithNoData }
         })
     }
 
-    static async SearchPatients(data: any) {
-        const { nid } = data
-        if (nid === undefined) {
-            throw createHttpError(ReasonPhrases.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
-        }
+    static async SearchPatients(nid: string) {
+
         const users = await UserModules.searchUsersByNid(nid!);
 
-        const modifiedUsers = users.map(
-            (user: {
-                id: string;
-                first_name: string;
-                last_name: string;
-                nid: string;
-            }) => ({
-                id: user.id,
-                fullName: user.first_name + " " + user.last_name,
-                nid: user.nid,
-            })
-        );
+        const modifiedUsers = users.map(user => ({
+            id: user.id,
+            fullName: user.first_name + " " + user.last_name,
+            nid: user.NID,
+        }));
         return modifiedUsers
     }
 
-    static async FetchAllData(nid: string | undefined, userId: string | undefined, role: "admin" | "patient" | "ed" | "doctor") {
+    static async FetchAllData(nid: string) {
+        let user = await UserModules.fetchAllUserDataWithNid(nid)
 
-        if (!nid || !userId) {
-            throw createHttpError(StatusCodes.BAD_REQUEST, ReasonPhrases.BAD_REQUEST)
-        }
-
-        let [user, doctor] = await Promise.all([
-            UserModules.fetchAllUserDataWithNid(nid),
-            UserModules.findUserById(userId)
-        ]);
-
-        if (!user || !doctor) {
-            throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
-        }
-
-        const hasPermission = await PermissionsModule.checkPermissionValidation(
-            user.id,
-            doctor.doctorProfile?.id!,
-            1
-        );
-
-        if (
-            !hasPermission &&
-            !user.openAccess &&
-            role !== "admin" &&
-            role !== "ed" &&
-            doctor.id !== user.id
-        ) {
-            throw createHttpError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
+        if (!user) {
+            return null;
         }
 
         const cache = await UserCaching.getUser(user.NID);
         if (cache) {
-            console.log("cached user", cache);
             return cache;
         }
 
@@ -174,7 +114,7 @@ export default class AuthService {
             await prescriptionModule.fetchLimitedPrescriptions(user.id);
 
 
-        const { patientDiagnoses, password, email, openAccess , patientAllergies, ...returnedUser } = user
+        const { patientDiagnoses, created_at, updated_at, password, email, openAccess, patientAllergies, ...returnedUser } = user
         let modifiedPrescriptions = prescriptions.map((presc) => {
             return {
                 id: presc.id,
@@ -214,7 +154,6 @@ export default class AuthService {
         const result = { returnedUser, modifiedPrescriptionsToResponse, filterDiseasesToOneDisease, filterAllergiesToOneAllergy }
         await UserCaching.setUser(user.NID, result);
 
-        console.log("result", result);
         return result
     }
 
@@ -240,7 +179,7 @@ export default class AuthService {
             }
 
             let user = refreshTokenEntity.user;
-            let returnedUser = userWithoutImportantData(user);
+            let returnedUser = SanitizeData.sanitizeUser(user);
 
             const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
                 CreateAuthenticationToken(user);

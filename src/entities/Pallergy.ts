@@ -1,9 +1,10 @@
-import { Entity, JoinColumn, ManyToOne } from "typeorm";
+import { Entity, JoinColumn, ManyToOne, Unique } from "typeorm";
 import { Allergy } from "./Allergy";
 import { User } from "./user";
 import { DefaultDocument } from "./NormalDocument";
 
 @Entity()
+@Unique(["patient", "allergy"])
 export class Pallergy extends DefaultDocument {
 
     @ManyToOne(() => User, patient => patient.patientAllergies, {

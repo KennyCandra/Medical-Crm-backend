@@ -1,16 +1,23 @@
-import express from "express";
+
 import AuthController from "../controllers/AuthController";
 import Auth from "../middleware/middleware";
+// import Auth from "../middleware/middleware";
 import {
   RegisterPatientSchema,
   LoginSchema,
 } from "../Schemas/RegisterSchema";
 import validate from "../Schemas/SchemaValidation";
-const router = express.Router();
+import { RouteFactory } from "../utils/RouterFactory";
+const router = RouteFactory.createCustomRoutes([
+  { method: "post", path: "/sign-up", handler: AuthController.SignUp, middleware: [validate(RegisterPatientSchema)] },
+  { method: "post", path: "/login", handler: AuthController.login, middleware: [validate(LoginSchema)] },
+  { method: "get", path: "/refreshToken", handler: AuthController.refreshToken },
+  { method: "delete", path: "/logout", handler: AuthController.logOut },
+  { method: "get", path: "/search/:nid", handler: AuthController.searchPatient, middleware: [Auth.checkToken, Auth.checkRoles(["doctor", "ed"])] },
+  { method: "get", path: "/patient/:nid", handler: AuthController.fetchAllPatientData, middleware: [Auth.checkToken, Auth.checkRoles(["doctor", "ed"])] },
+]);
 
-router.post("/sign-up", validate(RegisterPatientSchema), AuthController.SignUp);
 
-router.post("/login", validate(LoginSchema), AuthController.login);
 
 // router.post("/forget-password", AuthController.forgetPassword); //to do later
 
@@ -19,18 +26,5 @@ router.post("/login", validate(LoginSchema), AuthController.login);
 //   validate(resetTokenSchema),
 //   AuthController.resetPassword
 // ); //to do later
-
-router.get("/refreshToken", AuthController.refreshToken);
-
-router.delete("/logout", AuthController.logOut);
-
-router.get("/search/:nid", AuthController.searchPatient);
-
-router.get(
-  "/patient/:nid",
-  Auth.checkToken,
-  Auth.checkRoles(["doctor", "ed"]),
-  AuthController.fetchAllPatientData
-);
 
 export default router;

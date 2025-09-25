@@ -12,10 +12,15 @@ export const AppDataSource = new DataSource({
   database: process.env['DB_NAME'] || 'database',
   synchronize: true,
   ssl: true,
+  logging: true,
+  entities: process.env['ENV_MODE'] === "development" ?
+    [path.join(__dirname, "src/entities/*.ts")] :
+    [path.join(__dirname, "src/entities/*.js")],
+  migrations: process.env['ENV_MODE'] === "development" ?
+    [path.join(__dirname, "src/migrations/*.ts")] :
+    [path.join(__dirname, "src/migrations/*.js")],
   logging:
     true,
-  entities: process.env['ENV_MODE'] === "development" ? [path.join(__dirname, "src/entities/*.ts")] : [path.join(__dirname, "src/entities/*.js")],
-  migrations: process.env['ENV_MODE'] === "development" ? [path.join(__dirname, "src/migrations/*.ts")] : [path.join(__dirname, "src/migrations/*.js")],
   subscribers: [],
   schema: "public",
 });

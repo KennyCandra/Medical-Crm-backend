@@ -1,21 +1,9 @@
-import { Router } from "express";
-import DiseaseController from "../controllers/DiseaseController";
-import Auth from "../middleware/middleware";
 
-const router = Router();
+import DiseaseService from "../Services/DiseaseService";
+import { RouteFactory } from "../utils/RouterFactory";
 
-router.get(
-  "/:value",
-  Auth.checkToken,
-  Auth.checkRoles(["doctor", "admin"]),
-  DiseaseController.fetchSpecificDisease
-);
-
-router.get(
-  "/",
-  Auth.checkToken,
-  Auth.checkRoles(["doctor", "admin"]),
-  DiseaseController.fetchDisease
-);
+const router = RouteFactory.createCustomRoutes([
+  { method: "get", path: "/search/:value", handler: DiseaseService.searchDisease },
+]);
 
 export default router;

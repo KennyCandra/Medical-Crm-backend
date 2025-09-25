@@ -1,120 +1,106 @@
-import { Response, Request, NextFunction, CookieOptions } from "express";
+import { Response, Request, CookieOptions } from "express";
 import { AppDataSource } from "../../ormconfig";
 import DoctorProfileModules from "../modules/DoctorModules";
 import { RefreshToken } from "../entities/refreshToken";
 import { cookiesConfig, removedCookiesConfig } from "../config/cookiesConfig";
 import AuthService from "../Services/AuthService";
 import { ResponseHelper } from "../utils/ResponseHelper";
+import asyncWrapper from "../utils/AsyncWrapper";
+import { UpdatedUser } from "../helpers/UserWithoutImportantData";
+import { StatusCodes } from "http-status-codes";
 
 class AuthController {
-  static async SignUp(req: Request, res: Response, next: NextFunction) {
-    try {
-      const newUser = await AuthService.signUp(req.body)
-      ResponseHelper.created(res, newUser)
-    } catch (err: unknown) {
-      next(err)
-    }
-  }
+  static SignUp = asyncWrapper(async (req: Request, res: Response) => {
+    const newUser = await AuthService.signUp(req.body)
+    ResponseHelper.created(res, newUser)
+  })
 
-  static async login(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { refreshToken, accessToken, userWithNoData } = await AuthService.Login(req.body)
-      res.cookie("refreshToken", refreshToken, cookiesConfig as CookieOptions);
-      ResponseHelper.success(res, { accessToken, user: userWithNoData })
-    } catch (err: unknown) {
-      next(err);
-    }
-  }
+  static login = asyncWrapper(async (req: Request, res: Response) => {
+    const data: { refreshToken: string, accessToken: string, userWithNoData: UpdatedUser } | false = await AuthService.Login(req.body)
 
-  static async refreshToken(
+    if (data === false) {
+      ResponseHelper.error(res, StatusCodes.UNAUTHORIZED, "Invalid credentials")
+      return;
+    }
+    const { refreshToken, accessToken, userWithNoData } = data;
+    res.cookie("refreshToken", refreshToken, cookiesConfig as CookieOptions);
+    ResponseHelper.success(res, { accessToken, user: userWithNoData })
+  })
+
+  static refreshToken = asyncWrapper(async (
     req: Request,
     res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const refreshTokenFromCookie = req.cookies["refreshToken"];
-      const { refreshToken, accessToken, returnedUser } = await AuthService.refreshToken(refreshTokenFromCookie);
+  ) => {
+    const refreshTokenFromCookie = req.cookies["refreshToken"];
+    const { refreshToken, accessToken, returnedUser } = await AuthService.refreshToken(refreshTokenFromCookie);
 
-      res.cookie("refreshToken", refreshToken, cookiesConfig as CookieOptions);
-      ResponseHelper.success(res, { accessToken, user: returnedUser })
-    } catch (err: unknown) {
-      next(err);
-    }
-  }
+    res.cookie("refreshToken", refreshToken, cookiesConfig as CookieOptions);
+    ResponseHelper.success(res, { accessToken, user: returnedUser })
+  })
 
-  static async logOut(
+  static logOut = asyncWrapper(async (
     req: Request,
     res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const refreshToken = req.cookies["refreshToken"];
-      const refreshTokenSignature = refreshToken.split(".")[2];
-      await AppDataSource.manager.delete(RefreshToken, {
-        tokenSignature: refreshTokenSignature,
-      });
-      res.clearCookie("refreshToken", removedCookiesConfig as CookieOptions);
+  ) => {
+    const refreshToken = req.cookies["refreshToken"];
+    const refreshTokenSignature = refreshToken.split(".")[2];
+    await AppDataSource.manager.delete(RefreshToken, {
+      tokenSignature: refreshTokenSignature,
+    });
+    res.clearCookie("refreshToken", removedCookiesConfig as CookieOptions);
 
-      ResponseHelper.success(res, {})
-    } catch (err: unknown) {
-      next(err);
-    }
-  }
+    ResponseHelper.success(res, {})
+  })
 
-  static async searchPatient(req: Request, res: Response, next: NextFunction) {
-    try {
-      const users = await AuthService.SearchPatients(req.params)
+  static searchPatient = asyncWrapper(async (req: Request, res: Response) => {
+    const { nid } = req.params
+    const users = await AuthService.SearchPatients(nid as string)
+    ResponseHelper.success(res, { users })
+  })
 
-      ResponseHelper.success(res, { users })
-    } catch (err: unknown) {
-      console.log(err);
-      next(err);
-    }
-  }
-
-  static async fetchAllPatientData(
+  static fetchAllPatientData = asyncWrapper(async (
     req: Request,
     res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { nid } = req.params
-      const { role, id } = req.user
-      const { returnedUser, filterAllergiesToOneAllergy, filterDiseasesToOneDisease, modifiedPrescriptionsToResponse } = await AuthService.FetchAllData(nid, id, role as "admin" | "patient" | "doctor" | "ed")
+  ) => {
+    const { nid } = req.params
+    const data = await AuthService.FetchAllData(nid as string)
 
-      ResponseHelper.success(res, {
-        returnedUser,
-        prescriptions: modifiedPrescriptionsToResponse,
-        diagnoses: filterDiseasesToOneDisease,
-        allergies: filterAllergiesToOneAllergy,
-      })
-    } catch (err: unknown) {
-      next(err);
+    if (!data) {
+      ResponseHelper.error(res, StatusCodes.NOT_FOUND, "User not found")
+      return;
     }
-  }
 
-  static async fetchPendingDoctors(
+    const { returnedUser,
+      filterAllergiesToOneAllergy,
+      filterDiseasesToOneDisease,
+      modifiedPrescriptionsToResponse
+    } = data
+
+    ResponseHelper.success(res, {
+      user: returnedUser,
+      prescriptions: modifiedPrescriptionsToResponse,
+      diagnoses: filterDiseasesToOneDisease,
+      allergies: filterAllergiesToOneAllergy,
+    })
+  })
+
+  static fetchPendingDoctors = asyncWrapper(async (
     _req: Request,
     res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const doctors = await DoctorProfileModules.fetchPendingDoctors();
-      ResponseHelper.success(res, { doctors })
-    } catch (err: unknown) {
-      next(err);
-    }
-  }
+  ) => {
+    const doctors = await DoctorProfileModules.fetchPendingDoctors();
+    ResponseHelper.success(res, { doctors })
+  })
 
-  static async approveDoctor(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { doctors } = req.body;
-      const approvedDoctors = await DoctorProfileModules.approveDoctor(doctors);
-      ResponseHelper.success(res, { approvedDoctors })
-    } catch (err: unknown) {
-      next(err);
-    }
-  }
+  static approveDoctor = asyncWrapper(async (
+    req: Request,
+    res: Response,
+  ) => {
+    const { doctors } = req.body;
+    const approvedDoctors = await DoctorProfileModules.approveDoctor(doctors);
+    ResponseHelper.success(res, { approvedDoctors })
+  })
+
 }
 
 export default AuthController;

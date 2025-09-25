@@ -1,37 +1,24 @@
-import { AppDataSource } from "../../ormconfig"
-import { DoctorProfile } from "../entities/doctorProfile"
 import { Specialization } from "../entities/specialization"
-import createHttpError from 'http-errors'
-import { StatusCodes, ReasonPhrases } from "http-status-codes"
+import BasicModule from "./BasicModule"
 
-export class SpecializationModules {
+export default class SpecializationModules extends BasicModule<Specialization> {
 
-    static async allSpecialization() {
-        try {
-            const specializations = await AppDataSource.getRepository(Specialization).find()
-            return specializations
-        } catch (err) {
-            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
+    private static instance: SpecializationModules;
+    protected entityClass = Specialization;
+    protected entityName = "Specialization";
+
+    public static getInstance() {
+        if (!this.instance) {
+            this.instance = new SpecializationModules();
         }
+        return this.instance;
     }
 
-    static async doctorSpecialization(doctorId: string) {
-        try {
-            const doctorSpecialization = await AppDataSource.getRepository(DoctorProfile)
-                .createQueryBuilder('d')
-                .leftJoinAndSelect('d.specialization', 's')
-                .where('d.id = :id', { id: doctorId })
-                .getOne()
+    static async fetchAllSpecializations(): Promise<Specialization[]> {
+        return await this.getInstance().findAll();
+    }
 
-            if (!doctorSpecialization) {
-                throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
-
-            }
-
-            return doctorSpecialization.specialization.name
-        } catch (err) {
-            throw createHttpError(StatusCodes.INTERNAL_SERVER_ERROR, ReasonPhrases.INTERNAL_SERVER_ERROR)
-
-        }
+    static async doctorSpecialization(doctorId: string): Promise<Specialization | null> {
+        return await this.getInstance().findById(doctorId);
     }
 }

@@ -13,33 +13,30 @@ class AiPrompts {
   });
 
   private static async callOpenRouterAPI(content: string): Promise<string> {
-    try {
-      const chatCompletion = await this.groq.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a medical AI assistant specialized in drug interactions and allergies analysis. Provide accurate, detailed medical information in JSON format when requested.",
-          },
-          {
-            role: "user",
-            content: content,
-          },
-        ],
-        model: process.env['GROQ_MODEL'] || 'gemma2-9b-it',
-        temperature: 0.1,
-        max_tokens: 2048,
-      });
+    const chatCompletion = await this.groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a medical AI assistant specialized in drug interactions and allergies analysis. Provide accurate, detailed medical information in JSON format when requested.",
+        },
+        {
+          role: "user",
+          content: content,
+        },
+      ],
+      model: process.env['GROQ_MODEL'] || 'gemma2-9b-it',
+      temperature: 0.1,
+      max_tokens: 2048,
+    });
 
-      const responseContent = chatCompletion.choices[0]?.message?.content;
-      if (!responseContent) {
-        throw new Error("No response content from Groq API");
-      }
-      return responseContent;
-    } catch (error) {
-      throw error;
+    const responseContent = chatCompletion.choices[0]?.message?.content;
+    if (!responseContent) {
+      throw new Error("No response content from Groq API");
     }
+    return responseContent;
   }
+
   static async fetchOldDrugInteractionsAndAllergies(
     nid: string,
     parsedDrug: string

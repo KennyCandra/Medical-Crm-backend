@@ -1,11 +1,20 @@
 import { DoctorProfile } from "../entities/doctorProfile";
-import createHttpError from "http-errors";
 import { User } from "../entities/user";
 import { Specialization } from "../entities/specialization";
-import { AppDataSource } from "../../ormconfig";
-import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import BasicModule from "./BasicModule";
+import { FindOptionsSelect, ObjectLiteral } from "typeorm";
 
-export default class DoctorProfileModules {
+export default class DoctorProfileModules extends BasicModule<DoctorProfile> {
+  private static instance: DoctorProfileModules;
+  protected entityClass = DoctorProfile;
+  protected entityName = "DoctorProfile";
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new DoctorProfileModules();
+    }
+    return this.instance;
+  }
 
   static async createDoctor({
     user,
@@ -24,60 +33,23 @@ export default class DoctorProfileModules {
     return newDoctor;
   }
 
-  static async findDoctor(id: string) {
-    const doctorRepo = await AppDataSource.getRepository(DoctorProfile);
-    const doctor = await doctorRepo.findOne({
-      where: { id: id },
-      relations: ["user"],
-    });
-
-    if (!doctor) {
-      throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
-    }
-    return doctor;
-  }
-
-  static async findDoctorByid(id: string) {
-    const doctorUser = await AppDataSource.getRepository(User)
-      .createQueryBuilder("user")
-      .leftJoinAndSelect("user.doctorProfile", "doctorProfile")
-      .where(`user.id = :id`, { id })
-      .getOne();
-
-    if (!doctorUser) {
-      throw createHttpError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND)
-    }
-
-    return doctorUser.doctorProfile;
+  static async findDoctorById(id: string) {
+    return await this.getInstance().findWithIdAndRelations(id, ["user", "specialization"]);
   }
 
   static async fetchPendingDoctors() {
-    const doctors = await AppDataSource.getRepository(DoctorProfile)
-      .createQueryBuilder("doctor")
-      .where("doctor.status = :status", { status: "pending" })
-      .leftJoinAndSelect("doctor.user", "user")
-      .leftJoinAndSelect("doctor.specialization", "specialization")
-      .select([
-        "doctor.id AS id",
-        "doctor.medical_license_number AS medical_license_number",
-        "CONCAT(user.first_name, ' ', user.last_name) AS name",
-        "specialization.name AS specialization",
-        "user.NID AS NID",
-        "doctor.status AS status",
-      ])
-      .getRawMany();
-    return doctors;
+    const relations = ["user", "specialization"];
+    const where = { status: "pending" };
+    const order = {};
+    const selection: FindOptionsSelect<ObjectLiteral> = {};
+    return await this.getInstance().customFind(relations, where, order, selection);
   }
 
-  static async approveDoctor(doctors: DoctorProfile[]) {
-    const approvedDoctors: DoctorProfile[] = [];
-    for (const doctor of doctors) {
-      await AppDataSource.getRepository(
-        DoctorProfile
-      ).update(doctor.id, { status: doctor.status, reason: doctor.reason });
-      approvedDoctors.push(doctor);
-    }
-    return approvedDoctors;
+  static async approveDoctor(id: string) {
+    return await this.getInstance().update(id, { status: "approved", reason: "" } as DoctorProfile);
   }
 
+  static async rejectDoctor(id: string, reason: string) {
+    return await this.getInstance().update(id, { status: "rejected", reason: reason } as DoctorProfile);
+  }
 }
