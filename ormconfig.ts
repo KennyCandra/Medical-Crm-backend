@@ -10,7 +10,7 @@ export const AppDataSource = new DataSource({
   username: process.env['DB_USER'] || 'postgres',
   password: process.env['DB_PASS'] || '',
   database: process.env['DB_NAME'] || 'database',
-  synchronize: process.env['ENV_MODE'] === "development" ? true : false,
+  synchronize: true,
   ssl: true,
   logging: true,
   entities: process.env['ENV_MODE'] === "development" ?
@@ -19,6 +19,8 @@ export const AppDataSource = new DataSource({
   migrations: process.env['ENV_MODE'] === "development" ?
     [path.join(__dirname, "src/migrations/*.ts")] :
     [path.join(__dirname, "src/migrations/*.js")],
+  logging:
+    true,
   subscribers: [],
   schema: "public",
 });
